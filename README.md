@@ -1,37 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Language Learner
 
-## Getting Started
+Learn languages through short stories and the world around you, powered by HuggingFace for identity and inference.
 
-First, run the development server:
+Two clients, one backend:
+- **Web** — Next.js 16 App Router (also acts as the shared API).
+- **Mobile** — Flutter (latest stable), calls the same HTTP endpoints.
+
+Three flows:
+1. **Sign in with HuggingFace** (OAuth).
+2. **Practice** — read short stories matched to your CEFR level and target language; tap any word for a translation. Generate new stories on demand.
+3. **Camera** — take or upload a photo; the backend runs BLIP captioning, DETR detection, NLLB translation, and Mistral-generated example sentences.
+
+## Stack
+
+| Concern | Tech |
+|---|---|
+| Web | Next.js 16.2 · React 19 · Tailwind v4 · Turbopack |
+| Mobile | Flutter 3.41 · Riverpod · go_router · dio |
+| Auth | HuggingFace OAuth (`arctic`) · JWT (`jose`) |
+| DB | Postgres · Drizzle ORM |
+| Storage | Vercel Blob (optional) |
+| Inference | `@huggingface/inference` · Mistral-7B-Instruct · BLIP · DETR · NLLB-200 |
+
+## Getting started (web)
 
 ```bash
+# 1. Install deps
+npm install
+
+# 2. Bring up Postgres
+docker compose up -d
+
+# 3. Configure env — copy and fill in
+cp .env.example .env.local
+
+# 4. Apply schema
+npm run db:push
+
+# 5. (Optional) seed stories
+npm run db:seed
+
+# 6. Run dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Required env:
+- `AUTH_SECRET` — any 32+ char random string (`openssl rand -base64 32`)
+- `HF_OAUTH_CLIENT_ID` / `HF_OAUTH_CLIENT_SECRET` — from https://huggingface.co/settings/applications/new
+- `HF_TOKEN` — read token from https://huggingface.co/settings/tokens
+- Optional: `BLOB_READ_WRITE_TOKEN` for Vercel Blob
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Redirect URIs to register on the HF OAuth app:
+- `http://localhost:3000/api/auth/callback/huggingface`
+- `http://localhost:3000/api/auth/callback/huggingface?client=mobile`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Getting started (mobile)
 
-## Learn More
+```bash
+cd mobile
+flutter pub get
 
-To learn more about Next.js, take a look at the following resources:
+# iOS simulator — host loopback is 127.0.0.1 by default
+flutter run --dart-define=API_BASE_URL=http://127.0.0.1:3000
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Android emulator — host loopback is 10.0.2.2 (default)
+flutter run
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+See `docs/API.md` for the endpoints the app consumes.
 
-## Deploy on Vercel
+## Architecture notes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Auth**: both clients exchange an HF OAuth code for our own short-lived JWT. Web stores it in an httpOnly cookie; mobile in `flutter_secure_storage`. `lib/auth/session.ts#getSession()` handles both.
+- **Next.js 16 specifics**: `middleware.ts` is now `proxy.ts`; dynamic APIs (`cookies`, `headers`, `params`) are async; Turbopack is default. See `node_modules/next/dist/docs/01-app/02-guides/upgrading/version-16.md`.
+- **Data flow for camera**: multipart → BLIP + DETR in parallel → dedupe labels → translate each to target lang → Mistral generates 3 sentences keyed on caption + objects → persisted in `vision_jobs`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-"# languag-learning" 
+## Scripts
+
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Next.js dev server |
+| `npm run build` | Production build |
+| `npm run db:push` | Apply schema to Postgres |
+| `npm run db:generate` | Generate migration from schema |
+| `npm run db:migrate` | Apply pending migrations |
+| `npm run db:seed` | Insert hand-curated stories |
+| `npm run db:studio` | Drizzle Studio UI |

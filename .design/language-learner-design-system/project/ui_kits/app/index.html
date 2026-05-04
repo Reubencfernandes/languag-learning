@@ -1,0 +1,187 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Language Learner — Mobile App UI Kit</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  @font-face {
+    font-family: "Geist";
+    src: url("../../fonts/Geist-VariableFont_wght.ttf") format("truetype-variations");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  }
+  html, body { margin: 0; padding: 0; background: #eeece6; min-height: 100vh; font-family: Geist, sans-serif; }
+  .stage { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 36px 20px 60px; gap: 18px; }
+  .router-nav { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 820px; }
+  .router-nav .group { display: flex; gap: 4px; padding: 4px; border: 2px solid rgb(229,229,229); background: #fff; border-radius: 999px; }
+  .router-nav .glabel { font-family: Geist; font-size: 10px; font-weight: 900; letter-spacing: 0.16em; color: rgb(134,134,134); text-transform: uppercase; align-self: center; padding: 0 8px; }
+  .router-nav button {
+    border: none; background: transparent; border-radius: 999px;
+    padding: 7px 12px; font-family: Geist; font-size: 12px; font-weight: 800; cursor: pointer;
+    color: rgb(100,100,100);
+  }
+  .router-nav button.active { background: #131111; color: #fff; }
+  .router-nav .reset { border: 2px solid rgb(211,211,211); background: transparent; color: rgb(134,134,134); padding: 7px 14px; border-radius: 999px; }
+  .caption { font-family: Geist; font-size: 13px; font-weight: 500; color: rgb(120,120,120); max-width: 560px; text-align: center; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="./components/primitives.jsx"></script>
+<script type="text/babel" src="./components/Phone.jsx"></script>
+<script type="text/babel" src="./components/lessonData.jsx"></script>
+<script type="text/babel" src="./components/ModeToggle.jsx"></script>
+<script type="text/babel" src="./components/Homepage.jsx"></script>
+<script type="text/babel" src="./components/Choose.jsx"></script>
+<script type="text/babel" src="./components/Learn.jsx"></script>
+<script type="text/babel" src="./components/LessonQuestion.jsx"></script>
+<script type="text/babel" src="./components/LessonExplanation.jsx"></script>
+<script type="text/babel" src="./components/LessonResult.jsx"></script>
+<script type="text/babel" src="./components/Practice.jsx"></script>
+<script type="text/babel" src="./components/Profile.jsx"></script>
+<script type="text/babel" src="./components/Streak.jsx"></script>
+<script type="text/babel" src="./components/StudyIntro.jsx"></script>
+<script type="text/babel" src="./components/StudyVocab.jsx"></script>
+<script type="text/babel" src="./components/StudyGrammar.jsx"></script>
+<script type="text/babel" src="./components/StudyDialogue.jsx"></script>
+<script type="text/babel" src="./components/StudyCheck.jsx"></script>
+<script type="text/babel" src="./components/StudyDone.jsx"></script>
+<script type="text/babel" src="./components/PracticeGapFill.jsx"></script>
+<script type="text/babel" src="./components/PracticeReply.jsx"></script>
+<script type="text/babel" src="./components/PracticeAIChat.jsx"></script>
+<script type="text/babel" src="./components/PracticeSolo.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const CORE = [
+  { id: 'home',        label: '01 Home' },
+  { id: 'choose',      label: '02 Choose' },
+  { id: 'learn',       label: '03 Learn' },
+  { id: 'profile',     label: '04 Profile' },
+];
+const STUDY = [
+  { id: 'study-intro',    label: 'Intro' },
+  { id: 'study-vocab',    label: 'Vocab' },
+  { id: 'study-grammar',  label: 'Grammar' },
+  { id: 'study-dialogue', label: 'Dialogue' },
+  { id: 'study-check',    label: 'Check' },
+  { id: 'study-done',     label: 'Done' },
+];
+const PRACTICE = [
+  { id: 'practice',         label: 'Hub' },
+  { id: 'practice-gapfill', label: 'Gap-fill' },
+  { id: 'practice-reply',   label: 'Reply' },
+  { id: 'practice-aichat',  label: 'AI chat' },
+  { id: 'practice-solo',    label: 'Solo' },
+  { id: 'lesson',           label: 'MCQ' },
+  { id: 'explanation',      label: 'Concept' },
+  { id: 'result',           label: 'Result' },
+  { id: 'streak',           label: 'Streak' },
+];
+const ALL = [...CORE, ...STUDY, ...PRACTICE];
+
+function App() {
+  const [route, setRoute] = useState(() => localStorage.getItem('ll-route') || 'home');
+  const [progress, setProgress] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('ll-progress') || '[]'); } catch { return []; }
+  });
+  const [studyDone, setStudyDone] = useState(() => localStorage.getItem('ll-study-done') === '1');
+  const [learnMode, setLearnMode] = useState(() => localStorage.getItem('ll-mode') || 'study');
+  const [lastResult, setLastResult] = useState(true);
+
+  useEffect(() => { localStorage.setItem('ll-route', route); }, [route]);
+  useEffect(() => { localStorage.setItem('ll-progress', JSON.stringify(progress)); }, [progress]);
+  useEffect(() => { localStorage.setItem('ll-study-done', studyDone ? '1' : '0'); }, [studyDone]);
+  useEffect(() => { localStorage.setItem('ll-mode', learnMode); }, [learnMode]);
+
+  const go = (id) => setRoute(id);
+  const onNav = (id) => {
+    if (id === 'learn')    go('learn');
+    if (id === 'practice') go('practice');
+    if (id === 'profile')  go('profile');
+  };
+  const L = window.LESSON_SOUND_GREET;
+
+  let screen;
+  if (route === 'home')             screen = <Homepage onStart={() => go('choose')} />;
+  else if (route === 'choose')      screen = <Choose onContinue={() => go('learn')} />;
+  else if (route === 'learn')       screen = <Learn progress={progress} onNav={onNav}
+                                        mode={learnMode} onChangeMode={(m) => { setLearnMode(m); }}
+                                        onStartStudy={() => go('study-intro')}
+                                        onStartLesson={() => go(studyDone ? 'practice' : 'study-intro')} />;
+  else if (route === 'profile')     screen = <Profile onNav={onNav} />;
+
+  // Study flow
+  else if (route === 'study-intro')    screen = <StudyIntro    lesson={L} onClose={() => go('learn')} onContinue={() => go('study-vocab')} />;
+  else if (route === 'study-vocab')    screen = <StudyVocab    lesson={L} onClose={() => go('learn')} onContinue={() => go('study-grammar')} />;
+  else if (route === 'study-grammar')  screen = <StudyGrammar  lesson={L} onClose={() => go('learn')} onContinue={() => go('study-dialogue')} />;
+  else if (route === 'study-dialogue') screen = <StudyDialogue lesson={L} onClose={() => go('learn')} onContinue={() => go('study-check')} />;
+  else if (route === 'study-check')    screen = <StudyCheck    lesson={L} onClose={() => go('learn')} onContinue={() => { setStudyDone(true); go('study-done'); }} />;
+  else if (route === 'study-done')     screen = <StudyDone     lesson={L} onClose={() => go('learn')} onGoPractice={() => { setLearnMode('practice'); go('practice'); }} />;
+
+  // Practice flow
+  else if (route === 'practice')          screen = <Practice onNav={onNav} unlocked={studyDone}
+                                              onOpenDrill={(d) => {
+                                                if (d === 'gapfill')  go('practice-gapfill');
+                                                else if (d === 'reply')   go('practice-reply');
+                                                else if (d === 'aichat')  go('practice-aichat');
+                                                else if (d === 'solo')    go('practice-solo');
+                                                else if (d === 'dialogue')go('lesson');
+                                                else if (d === 'listen')  go('lesson');
+                                              }} />;
+  else if (route === 'practice-gapfill')  screen = <PracticeGapFill lesson={L} onClose={() => go('practice')} onContinue={() => go('practice-reply')} />;
+  else if (route === 'practice-reply')    screen = <PracticeReply   lesson={L} onClose={() => go('practice')} onContinue={() => go('practice-aichat')} />;
+  else if (route === 'practice-aichat')   screen = <PracticeAIChat  lesson={L} onClose={() => go('practice')} onContinue={() => go('practice-solo')} />;
+  else if (route === 'practice-solo')     screen = <PracticeSolo    lesson={L} onClose={() => go('practice')} onContinue={() => go('result')} />;
+
+  // Legacy / supporting screens still reachable
+  else if (route === 'explanation') screen = <LessonExplanation onClose={() => go('practice')} onContinue={() => go('lesson')} />;
+  else if (route === 'lesson')      screen = <LessonQuestion onClose={() => go('practice')} onCheck={(right) => {
+    setLastResult(right);
+    const next = Math.max(-1, ...progress) + 1;
+    if (right) setProgress([...progress, next]);
+    go('result');
+  }} />;
+  else if (route === 'result')   screen = <LessonResult success={lastResult} onContinue={() => go(lastResult ? 'streak' : 'practice')} />;
+  else if (route === 'streak')   screen = <Streak onContinue={() => go('practice')} />;
+
+  const findLabel = (id) => (ALL.find(r => r.id === id) || { label: id }).label;
+  const Group = ({ label, items }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span className="glabel">{label}</span>
+      <div className="group">
+        {items.map(r => (
+          <button key={r.id} className={route === r.id ? 'active' : ''} onClick={() => go(r.id)}>{r.label}</button>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="stage" data-screen-label={findLabel(route)}>
+      <div className="router-nav">
+        <Group label="App" items={CORE} />
+        <Group label="Study" items={STUDY} />
+        <Group label="Practice" items={PRACTICE} />
+        <button className="reset" onClick={() => { setProgress([]); setStudyDone(false); setLearnMode('study'); go('home'); }}>↻ reset</button>
+      </div>
+      {screen}
+      <div className="caption">Study (see→understand→observe) teaches new material; Practice (recall→use→respond→strengthen) reinforces it. Study unlocks Practice.</div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

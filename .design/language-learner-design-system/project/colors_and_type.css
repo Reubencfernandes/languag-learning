@@ -1,0 +1,173 @@
+/* Language Learner — Colors & Type
+ * Extracted from Figma file "Project Ember" + Next.js scaffold.
+ * The brand lives on three pillars: sunshine yellow (hero / progress),
+ * grass green (primary learn action), and sky blue (secondary / practice).
+ */
+
+@font-face {
+  font-family: "Geist";
+  src: url("fonts/Geist-VariableFont_wght.ttf") format("truetype-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* ——— Brand primitives ——— */
+  --ll-yellow-500: rgb(253, 226, 73);   /* hero background, progress start */
+  --ll-yellow-400: rgb(255, 214, 0);    /* lesson-node fill */
+  --ll-orange-500: rgb(212, 116, 0);    /* progress gradient end */
+  --ll-green-500:  rgb(84, 206, 1);     /* primary CTA / completed lesson */
+  --ll-green-400:  rgb(73, 253, 142);   /* success banner, streak highlight */
+  --ll-green-600:  rgb(79, 195, 92);    /* alt green, confirm states */
+  --ll-blue-500:   rgb(25, 173, 246);   /* secondary CTA / practice */
+  --ll-blue-600:   rgb(56, 152, 200);   /* swatch accent */
+
+  /* ——— Neutrals ——— */
+  --ll-black:      rgb(19, 17, 17);     /* dark button base */
+  --ll-ink:        rgb(0, 0, 0);        /* headings */
+  --ll-ink-2:      rgb(50, 49, 49);     /* body text */
+  --ll-ink-3:      rgb(61, 54, 2);      /* on-yellow body text */
+  --ll-gray-700:   rgb(105, 112, 114);
+  --ll-gray-600:   rgb(134, 134, 134);  /* unit eyebrow */
+  --ll-gray-500:   rgb(132, 131, 132);  /* placeholder */
+  --ll-gray-400:   rgb(165, 173, 173);  /* close icon */
+  --ll-gray-350:   rgb(166, 159, 159);  /* input border */
+  --ll-gray-300:   rgb(181, 181, 181);  /* inactive nav icon */
+  --ll-gray-200:   rgb(217, 217, 217);  /* progress track */
+  --ll-gray-150:   rgb(231, 231, 231);  /* node halo */
+  --ll-gray-100:   rgb(235, 232, 232);  /* card border */
+  --ll-off-white:  rgb(255, 249, 249);  /* icon fill */
+  --ll-white:      rgb(255, 255, 255);
+
+  /* ——— Semantic roles ——— */
+  --bg:            var(--ll-white);
+  --bg-hero:       var(--ll-yellow-500);
+  --surface:       var(--ll-white);
+  --surface-muted: var(--ll-gray-150);
+  --fg:            var(--ll-ink);
+  --fg-muted:      var(--ll-ink-2);
+  --fg-soft:       var(--ll-gray-600);
+  --fg-placeholder:var(--ll-gray-500);
+  --fg-on-dark:    var(--ll-white);
+  --fg-on-yellow:  var(--ll-ink-3);
+
+  --border:        var(--ll-gray-350);
+  --border-soft:   var(--ll-gray-100);
+  --divider:       var(--ll-gray-200);
+
+  --action-primary:    var(--ll-black);         /* pill CTA */
+  --action-learn:      var(--ll-green-400);     /* unit banner — current */
+  --action-practice:   var(--ll-blue-500);      /* unit banner — locked / bottom CTA */
+  --action-progress:   linear-gradient(var(--ll-yellow-500) 0%, var(--ll-orange-500) 100%);
+
+  /* ——— Radii ——— */
+  --radius-xs: 2px;    /* flag crop */
+  --radius-sm: 5px;    /* swatch */
+  --radius-md: 6px;    /* progress bar */
+  --radius-lg: 8px;    /* unit banner */
+  --radius-xl: 11px;   /* form input */
+  --radius-2xl: 12px;  /* large card */
+  --radius-pill: 20px; /* primary CTA pill */
+  --radius-full: 9999px;
+
+  /* ——— Spacing (4-based, matches Figma layout grid) ——— */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ——— Elevation ——— */
+  --shadow-node: 0 6px 0 rgba(0,0,0,0.08);         /* duolingo-style flat drop under lesson circles */
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-cta:  0 4px 14px rgba(19,17,17,0.18);
+
+  /* ——— Type ——— */
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-ui:   "Geist", var(--font-sans);
+  --font-display: "Geist", var(--font-sans);
+
+  /* Type scale (px — matches Figma) */
+  --fs-display: 32px;  /* page titles */
+  --fs-h2:      20px;  /* lesson titles, big CTA labels */
+  --fs-body:    16px;  /* body copy */
+  --fs-cta:     15px;  /* pill CTA label */
+  --fs-label:   14px;  /* eyebrows, form labels, buttons */
+  --fs-micro:   13px;  /* placeholder */
+
+  --lh-tight: 100%;
+  --lh-read: 30px;     /* explanation paragraph */
+
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold:600;
+  --fw-bold:    700;
+}
+
+/* ——— Semantic element defaults ——— */
+.ll-display,
+h1 {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-medium);
+  font-size: var(--fs-display);
+  line-height: var(--lh-tight);
+  color: var(--fg);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.ll-h2, h2 {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-tight);
+  color: var(--fg-muted);
+  margin: 0;
+}
+
+.ll-body, p {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-regular);
+  font-size: var(--fs-body);
+  line-height: var(--lh-read);
+  color: var(--fg-muted);
+  margin: 0;
+}
+
+.ll-label {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-label);
+  line-height: var(--lh-tight);
+  color: var(--fg);
+  text-transform: none;
+}
+
+.ll-eyebrow {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-label);
+  letter-spacing: 0.04em;
+  color: var(--fg-soft);
+  text-transform: uppercase;
+}
+
+.ll-cta {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-medium);
+  font-size: var(--fs-cta);
+  line-height: var(--lh-tight);
+  color: var(--fg-on-dark);
+}
+
+.ll-placeholder {
+  font-family: var(--font-ui);
+  font-size: var(--fs-micro);
+  color: var(--fg-placeholder);
+}
