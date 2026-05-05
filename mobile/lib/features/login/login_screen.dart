@@ -14,6 +14,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen>
     with SingleTickerProviderStateMixin {
   bool _loading = false;
+  bool _hovered = false;
   String? _error;
   late AnimationController _ctrl;
   late Animation<double> _fade;
@@ -59,19 +60,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Spacer(flex: 2),
-                Text(
-                  'Langlearn',
-                  style: GoogleFonts.almarai(
-                    color: kForeground,
-                    fontSize: 56,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -2,
-                    height: 1.0,
-                  ),
-                ),
+                Builder(builder: (context) {
+                  final w = MediaQuery.of(context).size.width;
+                  final titleSize = w >= 900 ? 40.0 : w >= 600 ? 48.0 : 56.0;
+                  return Text(
+                    'DialogueDock',
+                    style: GoogleFonts.almarai(
+                      color: kForeground,
+                      fontSize: titleSize,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -2,
+                      height: 1.0,
+                    ),
+                  );
+                }),
                 const SizedBox(height: 20),
                 Text(
-                  'Practice real-world languages using AI — not only learn but understand key things.',
+                  'Learn a new language through natural dialogues. Start thinking like a native speaker and stop translating.',
                   style: GoogleFonts.almarai(
                     color: kMuted,
                     fontSize: 15,
@@ -80,12 +85,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 ),
                 const Spacer(flex: 2),
                 // Pill button with arrow circle
-                GestureDetector(
+                MouseRegion(
+                  onEnter: (_) => setState(() => _hovered = true),
+                  onExit: (_) => setState(() => _hovered = false),
+                  child: GestureDetector(
                   onTap: _loading ? null : _signIn,
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
                     height: 56,
                     decoration: BoxDecoration(
-                      color: kPrimary,
+                      color: _hovered ? const Color(0xFFFB923C) : kPrimary,
                       borderRadius: BorderRadius.circular(999),
                     ),
                     padding: const EdgeInsets.only(left: 24, right: 8),
@@ -95,7 +104,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           child: Text(
                             _loading ? 'Opening browser…' : 'Start with HuggingFace',
                             style: GoogleFonts.almarai(
-                              color: kBackground,
+                              color: _hovered ? Colors.white : kBackground,
                               fontWeight: FontWeight.w500,
                               fontSize: 15,
                             ),
@@ -113,6 +122,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                       ],
                     ),
+                  ),
                   ),
                 ),
                 if (_error != null) ...[

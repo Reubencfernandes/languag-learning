@@ -18,8 +18,8 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Langlearn",
-  description: "Practice real-world languages using AI — dialogues, scenarios, and visual vocabulary.",
+  title: "DialogueDock",
+  description: "Where language meets real life. AI-powered dialogues that teach you to think in a new language — not just translate it.",
 };
 
 export default function RootLayout({

@@ -20,7 +20,7 @@ export function HeroSection() {
           muted
           playsInline
           className="absolute inset-0 w-full h-full object-cover"
-          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260405_170732_8a9ccda6-5cff-4628-b164-059c500a2b41.mp4"
+          src="http://d8j0ntlcm91z4.cloudfront.net/user_34DpnLwtmxkLgtVe8psPn1j2G8i/hf_20260505_151902_782a6426-d5ef-40eb-b482-d807701834c1.mp4"
         />
 
         {/* Noise overlay */}
@@ -38,13 +38,13 @@ export function HeroSection() {
           <div className="col-span-12 lg:col-span-8 flex items-end z-0">
             <div className="relative inline-block leading-[0.85] pointer-events-none">
               <motion.span
-                className="block text-[26vw] sm:text-[24vw] md:text-[22vw] lg:text-[20vw] xl:text-[19vw] 2xl:text-[20vw] font-medium tracking-[-0.07em]"
+                className="block text-5xl sm:text-6xl md:text-8xl lg:text-[10vw] xl:text-[9vw] 2xl:text-[8vw] font-medium tracking-[-0.07em] whitespace-nowrap"
                 style={{ color: "#E1E0CC", lineHeight: 0.85 }}
                 initial={{ y: 20, opacity: 0 }}
                 animate={isInView ? { y: 0, opacity: 1 } : { y: 20, opacity: 0 }}
                 transition={{ duration: 0.8, delay: 0.08, ease: EASE }}
               >
-                Langlearn
+                DialogueDock
                 <sup
                   className="absolute"
                   style={{
@@ -62,7 +62,7 @@ export function HeroSection() {
           </div>
 
           {/* Right column — 4 cols */}
-          <div className="col-span-12 lg:col-span-4 flex flex-col justify-end gap-5 pb-1 lg:pb-12 z-10">
+          <div className="col-span-12 lg:col-span-4 flex flex-col justify-end gap-5 pb-1 lg:pb-2 z-10">
             <motion.p
               initial={{ y: 20, opacity: 0 }}
               animate={isInView ? { y: 0, opacity: 1 } : { y: 20, opacity: 0 }}
@@ -70,7 +70,7 @@ export function HeroSection() {
               className="text-primary/70 text-xs sm:text-sm md:text-base max-w-[280px] lg:max-w-none"
               style={{ lineHeight: 1.2 }}
             >
-              Practice real-world languages using AI with Langlearn — not only learn but understand key things.
+              Learn a new language through natural dialogues. Start thinking like a native speaker and stop translating.
             </motion.p>
 
             <motion.a
@@ -78,7 +78,7 @@ export function HeroSection() {
               initial={{ y: 20, opacity: 0 }}
               animate={isInView ? { y: 0, opacity: 1 } : { y: 20, opacity: 0 }}
               transition={{ duration: 0.8, delay: 0.7, ease: EASE }}
-              className="inline-flex items-center self-start rounded-full bg-primary px-6 py-3 sm:px-8 sm:py-3 text-sm sm:text-base font-medium text-black transition-colors hover:bg-yellow-400 whitespace-nowrap"
+              className="inline-flex items-center self-start rounded-full bg-primary px-6 py-3 sm:px-8 sm:py-3 text-sm sm:text-base font-medium text-black transition-colors hover:bg-orange-400 hover:text-white whitespace-nowrap"
             >
               Start with HuggingFace
             </motion.a>

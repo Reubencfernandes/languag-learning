@@ -25,7 +25,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             href="/practice"
             className="text-sm font-medium tracking-tight text-primary"
           >
-            Langlearn
+            DialogueDock
           </Link>
           <nav className="flex items-center gap-6 text-sm">
             <Link
