@@ -1,6 +1,7 @@
 import { InferenceClient } from "@huggingface/inference";
 import { languageName, type Level } from "@/lib/languages";
 import type { DialogueTurn, FuriSegment } from "@/lib/types/dialogue";
+import { extractJson } from "@/lib/hf/json";
 
 const MODEL = "google/gemma-4-26B-A4B-it";
 
@@ -122,16 +123,5 @@ function parseSegments(raw: unknown): FuriSegment[] | undefined {
     }))
     .filter((seg) => seg.text);
   return segments.length ? segments : undefined;
-}
-
-function extractJson(raw: string): Record<string, unknown> {
-  const trimmed = raw.trim();
-  try {
-    return JSON.parse(trimmed);
-  } catch {
-    const match = trimmed.match(/\{[\s\S]*\}/);
-    if (match) return JSON.parse(match[0]);
-    throw new Error("could not parse dialogue JSON");
-  }
 }
 

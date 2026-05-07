@@ -1,5 +1,6 @@
 import { InferenceClient } from "@huggingface/inference";
 import { languageName, type Level } from "@/lib/languages";
+import { extractJson } from "@/lib/hf/json";
 
 const MODEL = "google/gemma-4-26B-A4B-it";
 
@@ -202,63 +203,3 @@ function parseSegments(raw: unknown): FuriSegment[] | undefined {
   return segments.length ? segments : undefined;
 }
 
-function extractJson(raw: string): Record<string, unknown> {
-  const trimmed = raw.trim();
-  const candidates = [trimmed];
-  const match = trimmed.match(/\{[\s\S]*\}/);
-  if (match) candidates.push(match[0]);
-
-  for (const candidate of candidates) {
-    try {
-      return JSON.parse(candidate);
-    } catch {
-      // try repaired version
-    }
-    try {
-      return JSON.parse(repairJson(candidate));
-    } catch {
-      // continue
-    }
-  }
-  throw new Error("could not parse phrase JSON");
-}
-
-// Best-effort fix for common LLM JSON truncations: trailing commas and
-// unterminated arrays/objects/strings near the tail of the response.
-function repairJson(input: string): string {
-  let s = input.trim();
-  // Strip trailing commas before } or ]
-  s = s.replace(/,\s*([}\]])/g, "$1");
-
-  // If it ends mid-string, close the string.
-  let inString = false;
-  let escape = false;
-  const stack: string[] = [];
-  for (let i = 0; i < s.length; i++) {
-    const ch = s[i];
-    if (escape) {
-      escape = false;
-      continue;
-    }
-    if (ch === "\\" && inString) {
-      escape = true;
-      continue;
-    }
-    if (ch === '"') {
-      inString = !inString;
-      continue;
-    }
-    if (inString) continue;
-    if (ch === "{" || ch === "[") stack.push(ch);
-    else if (ch === "}" && stack[stack.length - 1] === "{") stack.pop();
-    else if (ch === "]" && stack[stack.length - 1] === "[") stack.pop();
-  }
-  if (inString) s += '"';
-  // Drop any trailing comma now exposed
-  s = s.replace(/,\s*$/, "");
-  while (stack.length) {
-    const open = stack.pop();
-    s += open === "{" ? "}" : "]";
-  }
-  return s;
-}

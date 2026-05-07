@@ -34,8 +34,8 @@ export function LevelPicker({
               isSm ? "px-3 py-1 text-[11px]" : "px-3.5 py-1.5 text-xs"
             } ${
               active
-                ? "bg-[#155DD7] text-white shadow-[0_2px_0_#0F45A0]"
-                : "bg-white text-[#3C3C3C] ring-1 ring-inset ring-[#E5E5E5] hover:bg-[#F4F7FF]"
+                ? "bg-[#7C3AED] text-white shadow-[0_2px_0_#5B21B6]"
+                : "bg-white text-[#3C3C3C] ring-1 ring-inset ring-[#E5E5E5] hover:bg-[#F5F3FF]"
             }`}
           >
             {level}
