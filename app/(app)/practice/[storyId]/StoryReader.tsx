@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, CheckCircle } from "lucide-react";
+import { motion } from "framer-motion";
+import { BookOpen, CheckCircle, X } from "lucide-react";
 
 type Vocab = { word: string; gloss: string };
 
@@ -29,20 +29,17 @@ export function StoryReader({ storyId, content, vocab, fromLang, toLang }: Props
   const [selection, setSelection] = useState<Selection>(null);
   const [translation, setTranslation] = useState<string | null>(null);
   const [translating, setTranslating] = useState(false);
-
-  // Quiz state
   const [quizLoading, setQuizLoading] = useState(false);
   const [questions, setQuestions] = useState<StoryQuestion[] | null>(null);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [quizScore, setQuizScore] = useState<number | null>(null);
   const [quizError, setQuizError] = useState<string | null>(null);
-
   const containerRef = useRef<HTMLDivElement>(null);
 
   const vocabMap = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const v of vocab) m.set(v.word.toLowerCase(), v.gloss);
-    return m;
+    const map = new Map<string, string>();
+    for (const v of vocab) map.set(v.word.toLowerCase(), v.gloss);
+    return map;
   }, [vocab]);
 
   useEffect(() => {
@@ -50,7 +47,7 @@ export function StoryReader({ storyId, content, vocab, fromLang, toLang }: Props
   }, [storyId]);
 
   async function handleWord(word: string, rect: DOMRect) {
-    const clean = word.replace(/[^\p{L}\p{M}\p{N}\-'']+/gu, "");
+    const clean = word.replace(/[^\p{L}\p{M}\p{N}\-']+/gu, "");
     if (!clean) return;
     setSelection({ word: clean, rect });
     setTranslation(null);
@@ -68,10 +65,10 @@ export function StoryReader({ storyId, content, vocab, fromLang, toLang }: Props
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ text: clean, from: fromLang, to: toLang }),
       });
-      const j = await res.json();
-      setTranslation(j.translation ?? j.error ?? "—");
+      const data = await res.json();
+      setTranslation(data.translation ?? data.error ?? "-");
     } catch {
-      setTranslation("—");
+      setTranslation("-");
     } finally {
       setTranslating(false);
     }
@@ -81,7 +78,11 @@ export function StoryReader({ storyId, content, vocab, fromLang, toLang }: Props
     setQuizLoading(true);
     setQuizError(null);
     try {
-      const res = await fetch(`/api/stories/${storyId}/questions`, { method: "POST" });
+      const res = await fetch(`/api/stories/${storyId}/questions`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
       if (!res.ok) throw new Error("failed");
       const data = await res.json();
       setQuestions(Array.isArray(data) ? data : []);
@@ -105,196 +106,159 @@ export function StoryReader({ storyId, content, vocab, fromLang, toLang }: Props
   }
 
   function renderContent() {
-    const paragraphs = content.split(/\n\n+/);
-    return paragraphs.map((para, pi) => (
-      <p key={pi} className="mb-5 text-lg leading-relaxed text-[#E1E0CC]">
-        {tokenize(para).map((tok, ti) =>
-          tok.word ? (
+    return content.split(/\n\n+/).map((paragraph, paragraphIndex) => (
+      <p key={paragraphIndex} className="mb-5 text-lg font-bold leading-8 text-[#3C3C3C]">
+        {tokenize(paragraph).map((token, tokenIndex) =>
+          token.word ? (
             <span
-              key={ti}
-              className="cursor-pointer rounded-sm px-0.5 transition hover:bg-primary/15"
+              key={tokenIndex}
+              className="cursor-pointer rounded-md px-0.5 underline decoration-[#0EA5A4] decoration-2 underline-offset-4 transition hover:bg-[#CCFBF1]"
               onClick={(e) => {
                 const rect = (e.target as HTMLElement).getBoundingClientRect();
-                void handleWord(tok.text, rect);
+                void handleWord(token.text, rect);
               }}
             >
-              {tok.text}
+              {token.text}
             </span>
           ) : (
-            <span key={ti}>{tok.text}</span>
+            <span key={tokenIndex}>{token.text}</span>
           ),
         )}
       </p>
     ));
   }
 
-  return (
-    <div className="relative" ref={containerRef}>
-      {renderContent()}
+  const popupStyle = selection
+    ? {
+        top: Math.min(window.innerHeight - 132, selection.rect.bottom + 8),
+        left: Math.max(16, Math.min(window.innerWidth - 288, selection.rect.left)),
+      }
+    : undefined;
 
-      {/* Translation popup */}
+  return (
+    <div ref={containerRef} className="relative space-y-6">
+      <section className="duo-card p-5 sm:p-7">{renderContent()}</section>
+
       {selection ? (
-        <div
-          role="dialog"
-          style={{
-            position: "fixed",
-            top: Math.min(window.innerHeight - 120, selection.rect.bottom + 8),
-            left: Math.max(16, Math.min(window.innerWidth - 280, selection.rect.left)),
-            borderColor: "rgba(225,224,204,0.16)",
-            background: "#101010",
-          }}
-          className="z-50 w-64 rounded-xl border p-3 shadow-xl"
-        >
+        <div role="dialog" style={popupStyle} className="fixed z-50 w-72 rounded-2xl border-2 border-[#E5E5E5] bg-white p-4 shadow-[0_6px_0_rgba(0,0,0,0.12)]">
           <div className="flex items-start justify-between gap-2">
-            <div className="text-sm font-medium text-[#E1E0CC]">{selection.word}</div>
-            <button
-              onClick={() => setSelection(null)}
-              className="text-xs"
-              style={{ color: "rgba(225,224,204,0.5)" }}
-            >
-              ✕
+            <div className="text-base font-black text-[#3C3C3C]">{selection.word}</div>
+            <button onClick={() => setSelection(null)} className="grid h-7 w-7 place-items-center rounded-full text-[#AFAFAF] hover:bg-[#F7F7F7]">
+              <X size={16} />
             </button>
           </div>
-          <div className="mt-1 text-sm" style={{ color: "rgba(225,224,204,0.6)" }}>
-            {translating ? "Translating…" : translation ?? "—"}
+          <div className="mt-2 text-sm font-bold text-[#7C3AED]">
+            {translating ? "Translating..." : translation ?? "-"}
           </div>
         </div>
       ) : null}
 
-      {/* Vocabulary */}
       {vocab.length > 0 ? (
-        <section className="mt-10 border-t pt-6" style={{ borderColor: "rgba(225,224,204,0.1)" }}>
-          <h2 className="text-xs font-semibold uppercase tracking-[0.15em]" style={{ color: "rgba(225,224,204,0.5)" }}>
-            Key vocabulary
-          </h2>
-          <dl className="mt-3 grid gap-y-2 gap-x-6 sm:grid-cols-2">
+        <section className="duo-card p-5">
+          <h2 className="duo-eyebrow">Key vocabulary</h2>
+          <dl className="mt-4 grid gap-3 sm:grid-cols-2">
             {vocab.map((v) => (
-              <div key={v.word} className="flex items-baseline gap-3">
-                <dt className="font-medium text-[#E1E0CC]">{v.word}</dt>
-                <dd className="text-sm" style={{ color: "rgba(225,224,204,0.55)" }}>{v.gloss}</dd>
+              <div key={v.word} className="duo-soft-panel p-4">
+                <dt className="text-base font-black text-[#3C3C3C]">{v.word}</dt>
+                <dd className="mt-1 text-sm font-bold text-[#777777]">{v.gloss}</dd>
               </div>
             ))}
           </dl>
         </section>
       ) : null}
 
-      {/* Quiz section */}
-      <section className="mt-12 border-t pt-8" style={{ borderColor: "rgba(225,224,204,0.1)" }}>
-        <div className="flex items-center gap-3 mb-6">
-          <BookOpen size={18} style={{ color: "rgba(225,224,204,0.5)" }} />
-          <h2 className="text-sm font-semibold uppercase tracking-[0.15em]" style={{ color: "rgba(225,224,204,0.5)" }}>
-            Test yourself
-          </h2>
+      <section className="duo-card p-5 sm:p-6">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#EDE9FE] text-[#7C3AED]">
+            <BookOpen size={22} />
+          </div>
+          <div>
+            <h2 className="text-lg font-black text-[#3C3C3C]">Test yourself</h2>
+            <div className="text-xs font-bold text-[#777777]">Answer every question to finish the lesson.</div>
+          </div>
         </div>
 
-        {!questions && !quizLoading && !quizError && (
-          <button
-            onClick={loadQuiz}
-            className="rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-black transition hover:opacity-90"
-          >
+        {!questions && !quizLoading && !quizError ? (
+          <button onClick={loadQuiz} className="btn-duo btn-duo-primary w-full sm:w-auto">
             Generate questions
           </button>
-        )}
+        ) : null}
 
-        {quizLoading && (
-          <p className="text-sm" style={{ color: "rgba(225,224,204,0.5)" }}>
-            Generating questions…
-          </p>
-        )}
+        {quizLoading ? <p className="text-sm font-bold text-[#777777]">Generating questions...</p> : null}
 
-        {quizError && (
-          <div className="space-y-2">
-            <p className="text-sm text-red-400">{quizError}</p>
-            <button onClick={loadQuiz} className="text-xs text-primary hover:opacity-80">
+        {quizError ? (
+          <div className="space-y-3">
+            <p className="text-sm font-bold text-[#BE123C]">{quizError}</p>
+            <button onClick={loadQuiz} className="btn-duo btn-duo-white text-sm">
               Retry
             </button>
           </div>
-        )}
+        ) : null}
 
-        {questions && questions.length > 0 && (
-          <div className="space-y-8">
-            {questions.map((q, qi) => (
+        {questions && questions.length === 0 ? (
+          <p className="text-sm font-bold text-[#777777]">No questions were generated for this story.</p>
+        ) : null}
+
+        {questions && questions.length > 0 ? (
+          <div className="space-y-7">
+            {questions.map((q, questionIndex) => (
               <motion.div
-                key={qi}
+                key={questionIndex}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: qi * 0.1, ease: EASE }}
+                transition={{ duration: 0.45, delay: questionIndex * 0.05, ease: EASE }}
                 className="space-y-3"
               >
-                <p className="text-[#E1E0CC] font-medium">
-                  {qi + 1}. {q.question}
+                <p className="text-base font-black text-[#3C3C3C]">
+                  {questionIndex + 1}. {q.question}
                 </p>
-                <div className="grid gap-2">
-                  {q.options.map((opt, oi) => {
-                    const made = answers[qi] !== undefined;
-                    const isChosen = answers[qi] === oi;
-                    const isCorrect = oi === q.correctIndex;
+                <div className="grid gap-3">
+                  {q.options.map((option, optionIndex) => {
+                    const made = answers[questionIndex] !== undefined;
+                    const chosen = answers[questionIndex] === optionIndex;
+                    const correct = optionIndex === q.correctIndex;
+                    let className = "duo-card duo-card-interactive p-4 text-left text-sm font-black text-[#3C3C3C]";
 
-                    let borderColor = "rgba(225,224,204,0.12)";
-                    let bg = "#101010";
-                    let textColor = "#E1E0CC";
-
-                    if (made) {
-                      if (isCorrect) {
-                        borderColor = "rgba(134,239,172,0.5)";
-                        bg = "rgba(134,239,172,0.08)";
-                        textColor = "#86efac";
-                      } else if (isChosen) {
-                        borderColor = "rgba(252,165,165,0.5)";
-                        bg = "rgba(252,165,165,0.08)";
-                        textColor = "#fca5a5";
-                      } else {
-                        textColor = "rgba(225,224,204,0.3)";
-                      }
-                    }
+                    if (made && correct) className = "rounded-2xl border-2 border-[#0EA5A4] bg-[#CCFBF1] p-4 text-left text-sm font-black text-[#0B7C7B]";
+                    if (made && chosen && !correct) className = "rounded-2xl border-2 border-[#F43F5E] bg-[#FFE4E6] p-4 text-left text-sm font-black text-[#BE123C]";
+                    if (made && !chosen && !correct) className = "duo-card p-4 text-left text-sm font-black text-[#AFAFAF] opacity-70";
 
                     return (
                       <button
-                        key={oi}
+                        key={optionIndex}
                         disabled={made}
-                        onClick={() => handleAnswer(qi, oi)}
-                        className="rounded-xl border p-3 text-left text-sm transition-all hover:border-primary/40 disabled:cursor-default"
-                        style={{ borderColor, background: bg, color: textColor }}
+                        onClick={() => handleAnswer(questionIndex, optionIndex)}
+                        className={className}
                       >
-                        {opt}
+                        {option}
                       </button>
                     );
                   })}
                 </div>
-                {answers[qi] !== undefined && (
-                  <AnimatePresence>
-                    <motion.p
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-xs pl-1"
-                      style={{ color: "rgba(225,224,204,0.5)" }}
-                    >
-                      {q.explanation}
-                    </motion.p>
-                  </AnimatePresence>
-                )}
+                {answers[questionIndex] !== undefined ? (
+                  <p className="text-xs font-bold leading-5 text-[#777777]">{q.explanation}</p>
+                ) : null}
               </motion.div>
             ))}
 
-            {quizScore !== null && (
+            {quizScore !== null ? (
               <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, ease: EASE }}
-                className="rounded-2xl border p-6 text-center space-y-2"
-                style={{ borderColor: "rgba(225,224,204,0.12)", background: "#101010" }}
+                transition={{ duration: 0.45, ease: EASE }}
+                className="rounded-2xl border-2 border-[#0EA5A4] bg-[#CCFBF1] p-6 text-center"
               >
-                <CheckCircle size={32} className="mx-auto text-primary" />
-                <div className="text-xl font-bold text-[#E1E0CC]">
+                <CheckCircle size={36} className="mx-auto text-[#0B7C7B]" />
+                <div className="mt-2 text-3xl font-black text-[#0B7C7B]">
                   {quizScore} / {questions.length}
                 </div>
-                <p className="text-sm" style={{ color: "rgba(225,224,204,0.5)" }}>
+                <p className="mt-1 text-sm font-black text-[#0B7C7B]">
                   {quizScore === questions.length ? "Perfect score!" : "Keep reading to improve!"}
                 </p>
               </motion.div>
-            )}
+            ) : null}
           </div>
-        )}
+        ) : null}
       </section>
     </div>
   );
@@ -302,10 +266,11 @@ export function StoryReader({ storyId, content, vocab, fromLang, toLang }: Props
 
 function tokenize(text: string): Array<{ text: string; word: boolean }> {
   const out: Array<{ text: string; word: boolean }> = [];
-  const re = /([\p{L}\p{M}][\p{L}\p{M}\p{N}\-'']*)|([^\p{L}\p{M}\p{N}]+)/gu;
-  for (const m of text.matchAll(re)) {
-    if (m[1]) out.push({ text: m[1], word: true });
-    else if (m[2]) out.push({ text: m[2], word: false });
+  const re = /([\p{L}\p{M}][\p{L}\p{M}\p{N}\-']*)|([^\p{L}\p{M}\p{N}]+)/gu;
+  for (const match of text.matchAll(re)) {
+    if (match[1]) out.push({ text: match[1], word: true });
+    else if (match[2]) out.push({ text: match[2], word: false });
   }
   return out;
 }
+

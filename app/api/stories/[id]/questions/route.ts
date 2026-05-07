@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
 import { InferenceClient } from "@huggingface/inference";
 import { getSession } from "@/lib/auth/session";
-import { db } from "@/lib/db/client";
-import { stories } from "@/lib/db/schema";
 
-const hf = new InferenceClient(process.env.HF_TOKEN);
-const MODEL = "mistralai/Mistral-7B-Instruct-v0.3";
+const MODEL = "google/gemma-4-31B-it";
 
 export type StoryQuestion = {
   question: string;
@@ -15,16 +11,13 @@ export type StoryQuestion = {
   explanation: string;
 };
 
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
+  const { content } = await req.json().catch(() => ({}));
+  if (!content) return NextResponse.json({ error: "missing_content" }, { status: 400 });
 
-  const { id } = await params;
-  const [story] = await db.select().from(stories).where(eq(stories.id, id)).limit(1);
-  if (!story) return NextResponse.json({ error: "not_found" }, { status: 404 });
+  const hf = new InferenceClient(session.accessToken || process.env.HF_TOKEN);
 
   const system = `You are a reading comprehension quiz creator. Given a story, create 3 multiple-choice questions in English that test understanding of the story content.
 
@@ -40,7 +33,7 @@ Rules:
     model: MODEL,
     messages: [
       { role: "system", content: system },
-      { role: "user", content: `Story:\n${story.content}\n\nGenerate 3 comprehension questions.` },
+      { role: "user", content: `Story:\n${content}\n\nGenerate 3 comprehension questions.` },
     ],
     max_tokens: 700,
     temperature: 0.5,
@@ -60,7 +53,6 @@ Rules:
       parsed = JSON.parse(match[0]);
     }
 
-    // Handle both array directly or wrapped in an object
     const arr: unknown[] = Array.isArray(parsed)
       ? parsed
       : Array.isArray((parsed as Record<string, unknown>).questions)
@@ -83,3 +75,4 @@ Rules:
     return NextResponse.json({ error: "parse_failed" }, { status: 502 });
   }
 }
+

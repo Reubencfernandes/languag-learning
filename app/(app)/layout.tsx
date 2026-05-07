@@ -1,58 +1,39 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { Camera, Home, Languages, User } from "lucide-react";
 import { getSession } from "@/lib/auth/session";
-import { db } from "@/lib/db/client";
-import { profiles } from "@/lib/db/schema";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
   if (!session) redirect("/");
-
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.userId, session.userId))
-    .limit(1);
-
-  if (!profile) redirect("/onboarding");
+  if (!session.targetLang || !session.level) redirect("/onboarding");
 
   return (
-    <div className="flex min-h-full flex-col bg-black">
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
-          <Link
-            href="/practice"
-            className="text-sm font-medium tracking-tight text-primary"
-          >
-            DialogueDock
-          </Link>
-          <nav className="flex items-center gap-6 text-sm">
-            <Link
-              href="/practice"
-              className="transition-colors hover:text-[#E1E0CC]"
-              style={{ color: "rgba(225,224,204,0.8)" }}
-            >
-              Practice
-            </Link>
-            <Link
-              href="/camera"
-              className="transition-colors hover:text-[#E1E0CC]"
-              style={{ color: "rgba(225,224,204,0.8)" }}
-            >
-              Camera
-            </Link>
-            <Link
-              href="/profile"
-              className="transition-colors hover:text-[#E1E0CC]"
-              style={{ color: "rgba(225,224,204,0.8)" }}
-            >
-              Profile
-            </Link>
-          </nav>
+    <div className="min-h-full bg-[#F8FBFF] text-[#4B4B4B]">
+      <main className="duo-safe-bottom mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 md:pb-28">
+        {children}
+      </main>
+
+      <nav className="fixed inset-x-0 bottom-0 z-50 border-t-2 border-[#E5E5E5] bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
+        <div className="mx-auto grid max-w-2xl grid-cols-4 gap-2">
+          <BottomNavLink href="/practice" icon={<Home size={21} />} label="Practice" />
+          <BottomNavLink href="/camera" icon={<Camera size={21} />} label="Camera" />
+          <BottomNavLink href="/phrases" icon={<Languages size={21} />} label="Phrases" />
+          <BottomNavLink href="/profile" icon={<User size={21} />} label="Profile" />
         </div>
-      </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-8">{children}</main>
+      </nav>
     </div>
+  );
+}
+
+function BottomNavLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl text-xs font-black text-[#777777] transition hover:bg-[#F7F7F7] hover:text-[#3C3C3C] active:bg-[#F7F7F7] sm:flex-row sm:gap-2 sm:text-sm"
+    >
+      {icon}
+      {label}
+    </Link>
   );
 }

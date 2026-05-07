@@ -1,18 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { ChevronRight, Eye, EyeOff, RotateCcw, Trophy } from "lucide-react";
 import Link from "next/link";
-import type { DialogueTurn, DialogueOption } from "@/lib/db/schema";
-
-type Dialogue = {
-  id: string;
-  title: string;
-  scenario: string;
-  level: string;
-  turns: DialogueTurn[];
-};
+import type { DialogueTurn, DialogueOption, Dialogue } from "@/lib/types/dialogue";
+import { Avatar } from "@/app/components/Avatar";
+import { Furi } from "@/components/Furi";
 
 type Props = { dialogue: Dialogue };
 
@@ -27,22 +21,22 @@ export function DialogueClient({ dialogue }: Props) {
   const [completed, setCompleted] = useState(false);
 
   const turns = dialogue.turns;
-  const totalChoices = turns.filter((t) => t.type === "user_choice").length;
+  const totalChoices = turns.filter((turn) => turn.type === "user_choice").length;
 
   function advance() {
     if (turnIndex + 1 >= turns.length) {
       setCompleted(true);
     } else {
-      setTurnIndex((i) => i + 1);
+      setTurnIndex((index) => index + 1);
     }
   }
 
-  function handleChoice(turnIdx: number, optionIdx: number, option: DialogueOption) {
+  function handleChoice(turnIdx: number, displayIdx: number, option: DialogueOption) {
     if (choicesMade[turnIdx] !== undefined) return;
     const correct = option.isCorrect;
-    setChoicesMade((prev) => ({ ...prev, [turnIdx]: { chosen: optionIdx, correct } }));
-    if (correct) setScore((s) => s + 1);
-    setTimeout(advance, 1500);
+    setChoicesMade((prev) => ({ ...prev, [turnIdx]: { chosen: displayIdx, correct } }));
+    if (correct) setScore((value) => value + 1);
+    setTimeout(advance, 1200);
   }
 
   function toggleTranslation(idx: number) {
@@ -63,29 +57,19 @@ export function DialogueClient({ dialogue }: Props) {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: EASE }}
-        className="rounded-2xl border p-8 space-y-6 max-w-2xl"
-        style={{ borderColor: "rgba(225,224,204,0.12)", background: "#101010" }}
+        transition={{ duration: 0.55, ease: EASE }}
+        className="duo-card p-6 sm:p-8"
       >
-        <div className="space-y-2">
-          <div className="text-xs uppercase tracking-widest" style={{ color: "rgba(225,224,204,0.4)" }}>
-            Scenario
-          </div>
-          <p className="text-[#E1E0CC] leading-relaxed">{dialogue.scenario}</p>
+        <div className="duo-eyebrow text-[#7C3AED]">Scenario</div>
+        <p className="mt-3 text-xl font-black leading-8 text-[#3C3C3C]">{dialogue.scenario}</p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <span className="duo-chip">{turns.length} turns</span>
+          <span className="duo-chip">{totalChoices} choices</span>
+          <span className="duo-chip">{dialogue.level}</span>
         </div>
-        <div className="flex items-center gap-3 text-sm" style={{ color: "rgba(225,224,204,0.5)" }}>
-          <span>{turns.length} turns</span>
-          <span>·</span>
-          <span>{totalChoices} choices</span>
-          <span>·</span>
-          <span>{dialogue.level}</span>
-        </div>
-        <button
-          onClick={() => setStarted(true)}
-          className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-black transition hover:opacity-90"
-        >
+        <button onClick={() => setStarted(true)} className="btn-duo btn-duo-primary mt-7 w-full gap-2 sm:w-auto">
           Start dialogue
-          <ChevronRight size={16} />
+          <ChevronRight size={20} />
         </button>
       </motion.div>
     );
@@ -93,37 +77,30 @@ export function DialogueClient({ dialogue }: Props) {
 
   if (completed) {
     const pct = totalChoices > 0 ? Math.round((score / totalChoices) * 100) : 100;
+
     return (
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, ease: EASE }}
-        className="rounded-2xl border p-8 space-y-6 max-w-2xl text-center"
-        style={{ borderColor: "rgba(225,224,204,0.12)", background: "#101010" }}
+        transition={{ duration: 0.55, ease: EASE }}
+        className="duo-card p-8 text-center sm:p-10"
       >
-        <Trophy size={40} className="mx-auto text-primary" />
-        <div>
-          <div className="text-3xl font-bold text-[#E1E0CC]">{pct}%</div>
-          <div className="text-sm mt-1" style={{ color: "rgba(225,224,204,0.5)" }}>
-            {score} of {totalChoices} correct
-          </div>
+        <div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-[#FEF3C7] text-[#92400E] shadow-[0_4px_0_#FCD34D]">
+          <Trophy size={44} />
         </div>
-        <p className="text-sm text-[#E1E0CC]">
-          {pct === 100 ? "Perfect! You nailed every response." : pct >= 70 ? "Great work! Keep practising." : "Good effort — try again to improve."}
+        <div className="mt-6 text-5xl font-black text-[#0EA5A4]">{pct}%</div>
+        <div className="mt-2 text-base font-black text-[#777777]">
+          {score} of {totalChoices} correct
+        </div>
+        <p className="mx-auto mt-5 max-w-sm text-lg font-black leading-7 text-[#3C3C3C]">
+          {pct === 100 ? "Perfect! You nailed every response." : pct >= 70 ? "Great work. Keep practicing." : "Good effort. Try again to improve."}
         </p>
-        <div className="flex items-center justify-center gap-3">
-          <button
-            onClick={restart}
-            className="inline-flex items-center gap-2 rounded-full border px-5 py-2 text-sm transition-colors hover:border-primary/50"
-            style={{ borderColor: "rgba(225,224,204,0.2)", color: "rgba(225,224,204,0.8)" }}
-          >
-            <RotateCcw size={14} />
+        <div className="mt-7 grid gap-3 sm:grid-cols-2">
+          <button onClick={restart} className="btn-duo btn-duo-white gap-2">
+            <RotateCcw size={18} />
             Try again
           </button>
-          <Link
-            href="/practice"
-            className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-medium text-black transition hover:opacity-90"
-          >
+          <Link href="/practice" className="btn-duo btn-duo-primary">
             More dialogues
           </Link>
         </div>
@@ -134,123 +111,189 @@ export function DialogueClient({ dialogue }: Props) {
   const visibleTurns = turns.slice(0, turnIndex + 1);
 
   return (
-    <div className="space-y-4 max-w-2xl">
-      {/* Progress bar */}
-      <div className="h-1 rounded-full bg-white/10 overflow-hidden">
-        <motion.div
-          className="h-full bg-primary rounded-full"
-          initial={{ width: 0 }}
-          animate={{ width: `${((turnIndex + 1) / turns.length) * 100}%` }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-        />
+    <div className="space-y-6">
+      <div className="duo-card p-4">
+        <div className="duo-progress">
+          <motion.span
+            initial={{ width: 0 }}
+            animate={{ width: `${((turnIndex + 1) / turns.length) * 100}%` }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+          />
+        </div>
+        <div className="mt-2 text-xs font-black uppercase text-[#777777]">
+          Step {turnIndex + 1} of {turns.length}
+        </div>
       </div>
 
-      <AnimatePresence initial={false}>
-        {visibleTurns.map((turn, idx) => (
+      <div className="space-y-5">
+        {visibleTurns.map((turn: DialogueTurn, idx) => (
           <motion.div
             key={idx}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: EASE }}
+            transition={{ duration: 0.45, ease: EASE }}
           >
-            {turn.type === "narration" && (
-              <p className="text-sm italic px-1" style={{ color: "rgba(225,224,204,0.45)" }}>
-                {turn.text}
-              </p>
-            )}
+            {turn.type === "narration" ? (
+              <NarrationTurn text={turn.text} current={idx === turnIndex} onContinue={advance} />
+            ) : null}
 
-            {turn.type === "character" && (
-              <div
-                className="rounded-2xl rounded-tl-sm border p-4 space-y-2"
-                style={{ borderColor: "rgba(225,224,204,0.12)", background: "#101010" }}
-              >
-                {turn.speakerName && (
-                  <div className="text-xs font-medium uppercase tracking-widest" style={{ color: "rgba(225,224,204,0.4)" }}>
-                    {turn.speakerName}
-                  </div>
-                )}
-                <p className="text-[#E1E0CC]">{turn.text}</p>
-                {turn.translation && (
-                  <div>
-                    <button
-                      onClick={() => toggleTranslation(idx)}
-                      className="inline-flex items-center gap-1 text-xs transition-colors"
-                      style={{ color: "rgba(225,224,204,0.4)" }}
-                    >
-                      {showTranslation[idx] ? <EyeOff size={12} /> : <Eye size={12} />}
-                      {showTranslation[idx] ? "Hide" : "Show"} translation
-                    </button>
-                    {showTranslation[idx] && (
-                      <p className="mt-1 text-sm" style={{ color: "rgba(225,224,204,0.55)" }}>
-                        {turn.translation}
-                      </p>
-                    )}
-                  </div>
-                )}
-                {/* Auto-advance for character turns at end */}
-                {idx === turnIndex && turn.type === "character" && (
-                  <button
-                    onClick={advance}
-                    className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:opacity-80 transition-opacity"
-                  >
-                    Continue <ChevronRight size={12} />
-                  </button>
-                )}
-              </div>
-            )}
+            {turn.type === "character" ? (
+              <CharacterTurn
+                turn={turn}
+                dialogueId={dialogue.id}
+                current={idx === turnIndex}
+                translationVisible={Boolean(showTranslation[idx])}
+                onToggleTranslation={() => toggleTranslation(idx)}
+                onContinue={advance}
+              />
+            ) : null}
 
-            {turn.type === "user_choice" && (
-              <div className="space-y-2">
-                <p className="text-xs uppercase tracking-widest px-1" style={{ color: "rgba(225,224,204,0.4)" }}>
-                  {turn.text || "What do you say?"}
-                </p>
-                <div className="grid gap-2">
-                  {turn.options?.map((opt, oi) => {
-                    const made = choicesMade[idx];
-                    const isChosen = made?.chosen === oi;
-                    const isCorrect = opt.isCorrect;
-                    let borderColor = "rgba(225,224,204,0.12)";
-                    let bg = "#101010";
-                    let textColor = "#E1E0CC";
-
-                    if (made !== undefined) {
-                      if (isCorrect) {
-                        borderColor = "rgba(134,239,172,0.5)";
-                        bg = "rgba(134,239,172,0.08)";
-                        textColor = "#86efac";
-                      } else if (isChosen) {
-                        borderColor = "rgba(252,165,165,0.5)";
-                        bg = "rgba(252,165,165,0.08)";
-                        textColor = "#fca5a5";
-                      } else {
-                        textColor = "rgba(225,224,204,0.3)";
-                      }
-                    }
-
-                    return (
-                      <button
-                        key={oi}
-                        disabled={made !== undefined}
-                        onClick={() => handleChoice(idx, oi, opt)}
-                        className="rounded-xl border p-3 text-left text-sm transition-all hover:border-primary/40 disabled:cursor-default"
-                        style={{ borderColor, background: bg, color: textColor }}
-                      >
-                        {opt.text}
-                        {made !== undefined && isChosen && (
-                          <span className="ml-2 text-xs opacity-70">— {opt.feedback}</span>
-                        )}
-                        {made !== undefined && isCorrect && !isChosen && (
-                          <span className="ml-2 text-xs opacity-70">← Correct</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            {turn.type === "user_choice" ? (
+              <ChoiceTurn
+                turn={turn}
+                index={idx}
+                made={choicesMade[idx]}
+                onChoice={(optionIndex, option) => handleChoice(idx, optionIndex, option)}
+              />
+            ) : null}
           </motion.div>
         ))}
-      </AnimatePresence>
+      </div>
     </div>
   );
 }
+
+function NarrationTurn({ text, current, onContinue }: { text: string; current: boolean; onContinue: () => void }) {
+  return (
+    <div className="duo-card bg-[#F7F7F7] p-5 text-center">
+      <p className="text-base font-black italic text-[#777777]">{text}</p>
+      {current ? (
+        <button onClick={onContinue} className="btn-duo btn-duo-secondary mt-4 text-sm">
+          Continue
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function CharacterTurn({
+  turn,
+  dialogueId,
+  current,
+  translationVisible,
+  onToggleTranslation,
+  onContinue,
+}: {
+  turn: DialogueTurn;
+  dialogueId: string;
+  current: boolean;
+  translationVisible: boolean;
+  onToggleTranslation: () => void;
+  onContinue: () => void;
+}) {
+  return (
+    <div className="flex items-end gap-3 sm:gap-4">
+      <Avatar seed={turn.speakerName || "Character"} salt={dialogueId} />
+      <div className="duo-card relative flex-1 p-5">
+        <div className="absolute bottom-5 -left-[9px] h-4 w-4 rotate-45 border-b-2 border-l-2 border-[#E5E5E5] bg-white" />
+        <div className="relative z-10">
+          {turn.speakerName ? (
+            <div className="duo-eyebrow text-[#7C3AED]">{turn.speakerName}</div>
+          ) : null}
+          <p className={`mt-2 text-lg font-black leading-7 text-[#3C3C3C] ${turn.textSegments ? "has-furi" : ""}`}>
+            <Furi text={turn.text} segments={turn.textSegments} />
+          </p>
+
+          {turn.translation ? (
+            <div className="mt-4">
+              <button
+                onClick={onToggleTranslation}
+                className="inline-flex items-center gap-2 text-sm font-black text-[#777777] transition hover:text-[#7C3AED]"
+              >
+                {translationVisible ? <EyeOff size={16} /> : <Eye size={16} />}
+                {translationVisible ? "Hide" : "Show"} translation
+              </button>
+              {translationVisible ? (
+                <p className="mt-2 text-base font-black text-[#7C3AED]">{turn.translation}</p>
+              ) : null}
+            </div>
+          ) : null}
+
+          {current ? (
+            <button onClick={onContinue} className="btn-duo btn-duo-primary mt-5 w-full text-sm">
+              Continue
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ChoiceTurn({
+  turn,
+  index,
+  made,
+  onChoice,
+}: {
+  turn: DialogueTurn;
+  index: number;
+  made?: { chosen: number; correct: boolean };
+  onChoice: (displayIndex: number, option: DialogueOption) => void;
+}) {
+  // Shuffle once per turn so the correct option's display position is
+  // randomized — even if the model always drafts it first. Memoized on the
+  // option list so re-renders within the same turn keep the same order.
+  const displayOptions = useMemo(() => shuffle(turn.options ?? []), [turn.options]);
+
+  return (
+    <div className="duo-card p-5 sm:p-6">
+      <p className="text-lg font-black text-[#3C3C3C]">{turn.text || "What do you say?"}</p>
+      <div className="mt-4 grid gap-3">
+        {displayOptions.map((option, displayIndex) => {
+          const chosen = made?.chosen === displayIndex;
+          const correct = option.isCorrect;
+          let className = "duo-card duo-card-interactive p-4 text-left text-base font-black text-[#3C3C3C]";
+
+          if (made !== undefined && correct) {
+            className = "rounded-2xl border-2 border-[#0EA5A4] bg-[#CCFBF1] p-4 text-left text-base font-black text-[#0B7C7B]";
+          } else if (made !== undefined && chosen) {
+            className = "rounded-2xl border-2 border-[#F43F5E] bg-[#FFE4E6] p-4 text-left text-base font-black text-[#BE123C]";
+          } else if (made !== undefined) {
+            className = "duo-card p-4 text-left text-base font-black text-[#AFAFAF] opacity-70";
+          }
+
+          return (
+            <button
+              key={`${index}-${displayIndex}`}
+              disabled={made !== undefined}
+              onClick={() => onChoice(displayIndex, option)}
+              className={className}
+            >
+              <span className={option.textSegments ? "has-furi" : undefined}>
+                <Furi text={option.text} segments={option.textSegments} />
+              </span>
+              {made !== undefined && chosen ? (
+                <div className="mt-2 text-sm font-black">{option.feedback}</div>
+              ) : null}
+              {made !== undefined && correct && !chosen ? (
+                <div className="mt-2 text-sm font-black">Correct answer</div>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Fisher–Yates shuffle. Returns a new array; doesn't mutate the input.
+function shuffle<T>(input: readonly T[]): T[] {
+  const out = [...input];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+

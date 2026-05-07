@@ -1,12 +1,18 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Camera, ImagePlus, RotateCcw, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { AlertCircle, Camera, ImagePlus, RotateCcw, Sparkles } from "lucide-react";
+import type { Level } from "@/lib/languages";
+import type { FuriSegment } from "@/lib/types/dialogue";
+import { LevelPicker } from "@/components/LevelPicker";
+import { Furi } from "@/components/Furi";
 
 type AnalysisObject = {
   label: string;
   translation: string;
+  translationSegments?: FuriSegment[];
+  romanized?: string;
   box: [number, number, number, number];
   score: number;
 };
@@ -15,29 +21,33 @@ type Analysis = {
   id: string;
   caption: string;
   objects: AnalysisObject[];
-  sentences: Array<{ target: string; gloss: string }>;
+  sentences: Array<{ target: string; targetSegments?: FuriSegment[]; gloss: string; romanized?: string }>;
   imageUrl?: string;
 };
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-export function CameraClient() {
+export function CameraClient({ defaultLevel }: { defaultLevel: Level }) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [imageSize, setImageSize] = useState<{ w: number; h: number } | null>(null);
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [level, setLevel] = useState<Level>(defaultLevel);
   const inputRef = useRef<HTMLInputElement>(null);
 
   function pick(file: File) {
     setError(null);
     setAnalysis(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
+
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
+
     const img = new Image();
     img.onload = () => setImageSize({ w: img.naturalWidth, h: img.naturalHeight });
     img.src = url;
+
     void upload(file);
   }
 
@@ -46,14 +56,14 @@ export function CameraClient() {
     try {
       const form = new FormData();
       form.append("image", file);
+      form.append("level", level);
       const res = await fetch("/api/vision/analyze", { method: "POST", body: form });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         setError(j.message || j.error || "Analysis failed.");
         return;
       }
-      const j = (await res.json()) as Analysis;
-      setAnalysis(j);
+      setAnalysis((await res.json()) as Analysis);
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -62,11 +72,12 @@ export function CameraClient() {
   }
 
   function onInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
-    if (f) pick(f);
+    const file = e.target.files?.[0];
+    if (file) pick(file);
   }
 
   function clear() {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
     setAnalysis(null);
     setImageSize(null);
@@ -75,7 +86,7 @@ export function CameraClient() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <input
         ref={inputRef}
         type="file"
@@ -85,173 +96,163 @@ export function CameraClient() {
         className="hidden"
       />
 
-      {/* Upload zone */}
+      <div className="flex items-center justify-between gap-3 rounded-2xl bg-white px-4 py-3 ring-1 ring-[#E5E5E5]">
+        <span className="text-xs font-black text-[#777777]">Sentences will match this CEFR level</span>
+        <LevelPicker value={level} onChange={setLevel} size="sm" />
+      </div>
+
       {!previewUrl && (
-        <motion.div
+        <motion.button
+          type="button"
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: EASE }}
+          transition={{ duration: 0.5, ease: EASE }}
           onClick={() => inputRef.current?.click()}
-          className="cursor-pointer rounded-2xl border-2 border-dashed p-16 text-center transition-colors hover:border-primary/40 hover:bg-primary/5"
-          style={{ borderColor: "rgba(225,224,204,0.15)" }}
+          className="duo-card duo-card-interactive flex min-h-[240px] w-full flex-col items-center justify-center border-dashed p-8 text-center"
         >
-          <ImagePlus size={36} className="mx-auto mb-4" style={{ color: "rgba(225,224,204,0.35)" }} />
-          <p className="text-sm font-medium text-[#E1E0CC]">Tap to upload or take a photo</p>
-          <p className="mt-1 text-xs" style={{ color: "rgba(225,224,204,0.4)" }}>
-            Gemma AI will identify objects and teach you vocabulary
-          </p>
-        </motion.div>
+          <div className="grid h-16 w-16 place-items-center rounded-3xl bg-[#EDE9FE] text-[#7C3AED] shadow-[0_4px_0_#DDD6FE]">
+            <ImagePlus size={32} />
+          </div>
+          <div className="mt-5 text-xl font-black text-[#3C3C3C]">Add a photo</div>
+          <div className="mt-1 max-w-sm text-sm font-bold text-[#777777]">
+            Camera or gallery images become vocabulary cards.
+          </div>
+        </motion.button>
       )}
 
-      {/* Image preview with overlays */}
       {previewUrl && imageSize && (
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => inputRef.current?.click()}
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-black transition hover:opacity-90"
-            >
-              <Camera size={14} />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <button onClick={() => inputRef.current?.click()} className="btn-duo btn-duo-primary gap-2 text-sm">
+              <Camera size={18} />
               New photo
             </button>
-            <button
-              onClick={clear}
-              className="inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors hover:border-primary/40"
-              style={{ borderColor: "rgba(225,224,204,0.15)", color: "rgba(225,224,204,0.7)" }}
-            >
-              <RotateCcw size={14} />
+            <button onClick={clear} className="btn-duo btn-duo-white gap-2 text-sm">
+              <RotateCcw size={18} />
               Clear
             </button>
           </div>
 
-          <div className="relative inline-block overflow-hidden rounded-2xl border max-w-full" style={{ borderColor: "rgba(225,224,204,0.12)" }}>
-            <img
-              src={previewUrl}
-              alt="Your photo"
-              className="block max-h-[520px] w-auto max-w-full"
-            />
-            {/* Object bounding boxes — Gemma returns 0-1 normalized */}
-            {analysis?.objects.map((obj, i) => {
-              const [x1, y1, x2, y2] = obj.box;
-              const isNormalized = x1 <= 1 && y1 <= 1 && x2 <= 1 && y2 <= 1;
-              let left: string, top: string, width: string, height: string;
+          <div className="duo-card inline-block max-w-full overflow-hidden p-2">
+            <div className="relative inline-block max-w-full overflow-hidden rounded-2xl bg-[#101010]">
+              <img src={previewUrl} alt="Selected practice" className="block max-h-[560px] w-auto max-w-full" />
 
-              if (isNormalized) {
-                left = `${x1 * 100}%`;
-                top = `${y1 * 100}%`;
-                width = `${(x2 - x1) * 100}%`;
-                height = `${(y2 - y1) * 100}%`;
-              } else {
-                const W = imageSize.w;
-                const H = imageSize.h;
-                left = `${(x1 / W) * 100}%`;
-                top = `${(y1 / H) * 100}%`;
-                width = `${((x2 - x1) / W) * 100}%`;
-                height = `${((y2 - y1) / H) * 100}%`;
-              }
+              {analysis?.objects.map((obj, i) => {
+                const [x1, y1, x2, y2] = obj.box;
+                const isNormalized = x1 <= 1 && y1 <= 1 && x2 <= 1 && y2 <= 1;
+                const cx = (x1 + x2) / 2;
+                const cy = (y1 + y2) / 2;
+                const left = isNormalized ? `${cx * 100}%` : `${(cx / imageSize.w) * 100}%`;
+                const top = isNormalized ? `${cy * 100}%` : `${(cy / imageSize.h) * 100}%`;
 
-              return (
-                <div
-                  key={i}
-                  className="pointer-events-none absolute border-2 border-primary"
-                  style={{ left, top, width, height }}
-                >
-                  <span className="absolute left-0 top-0 -translate-y-full rounded-md rounded-bl-none bg-primary px-1.5 py-0.5 text-[11px] font-medium text-black whitespace-nowrap">
-                    {obj.translation}
-                  </span>
+                return (
+                  <div
+                    key={`${obj.translation}-${i}`}
+                    className="group absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
+                    style={{ left, top }}
+                  >
+                    <span className="absolute h-6 w-6 animate-ping rounded-full bg-[#0EA5A4]/60" />
+                    <span className="relative h-3 w-3 rounded-full bg-[#0EA5A4] ring-4 ring-white/85" />
+                    <div className="mt-2 rounded-2xl bg-white px-3 py-2 text-center shadow-[0_4px_0_rgba(0,0,0,0.18)] transition group-hover:-translate-y-1">
+                      <div className={`whitespace-nowrap text-xs font-black text-[#3C3C3C] ${obj.translationSegments ? "has-furi" : ""}`}>
+                        <Furi text={obj.translation} segments={obj.translationSegments} />
+                      </div>
+                      {obj.romanized ? (
+                        <div className="whitespace-nowrap text-[10px] font-bold text-[#777777]">{obj.romanized}</div>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {isLoading && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/80 backdrop-blur-sm">
+                  <Sparkles size={28} className="animate-pulse text-[#0EA5A4]" />
+                  <span className="text-sm font-black text-[#3C3C3C]">Analyzing...</span>
                 </div>
-              );
-            })}
-
-            {isLoading && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50 backdrop-blur-sm">
-                <Sparkles size={24} className="text-primary animate-pulse" />
-                <span className="text-sm text-[#E1E0CC]">Gemma is analysing…</span>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          {analysis?.caption && (
-            <p className="text-sm italic" style={{ color: "rgba(225,224,204,0.55)" }}>
-              {analysis.caption}
-            </p>
-          )}
+          {analysis?.caption ? (
+            <div className="duo-card p-4 text-sm font-bold italic text-[#777777]">{analysis.caption}</div>
+          ) : null}
         </div>
       )}
 
-      {error && (
-        <p className="text-sm text-red-400">{error}</p>
-      )}
+      {error ? (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start gap-3 rounded-2xl border-2 border-[#FECDD3] bg-[#FFE4E6] px-4 py-3"
+        >
+          <AlertCircle size={18} className="mt-0.5 shrink-0 text-[#BE123C]" />
+          <div>
+            <p className="text-sm font-black text-[#BE123C]">Analysis failed</p>
+            <p className="mt-0.5 text-xs font-bold text-[#A33434]">{error}</p>
+          </div>
+        </motion.div>
+      ) : null}
 
-      {/* Results */}
-      {analysis && (
-        <AnimatePresence>
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: EASE }}
-            className="grid gap-8 lg:grid-cols-2"
-          >
-            {/* Objects */}
-            <div className="space-y-4">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.15em]" style={{ color: "rgba(225,224,204,0.5)" }}>
-                Objects detected
-              </h2>
-              {analysis.objects.length > 0 ? (
-                <ul className="space-y-2">
-                  {analysis.objects.map((o, i) => (
-                    <motion.li
-                      key={i}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: i * 0.05, ease: EASE }}
-                      className="flex items-center justify-between rounded-xl border px-4 py-3"
-                      style={{ borderColor: "rgba(225,224,204,0.1)", background: "#101010" }}
-                    >
-                      <div>
-                        <div className="text-base font-semibold text-[#E1E0CC]">{o.translation}</div>
-                        <div className="text-xs" style={{ color: "rgba(225,224,204,0.4)" }}>{o.label}</div>
+      {analysis ? (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: EASE }}
+          className="grid gap-5 lg:grid-cols-2"
+        >
+          <ResultCard title="Objects detected">
+            {analysis.objects.length > 0 ? (
+              <ul className="space-y-3">
+                {analysis.objects.map((o, i) => (
+                  <li key={`${o.translation}-row-${i}`} className="duo-soft-panel flex items-center justify-between gap-3 p-4">
+                    <div>
+                      <div className={`text-base font-black text-[#3C3C3C] ${o.translationSegments ? "has-furi" : ""}`}>
+                        <Furi text={o.translation} segments={o.translationSegments} />
                       </div>
-                    </motion.li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm" style={{ color: "rgba(225,224,204,0.4)" }}>
-                  No objects detected. Try a clearer photo.
-                </p>
-              )}
-            </div>
+                      {o.romanized ? <div className="text-xs font-bold text-[#7C3AED]">{o.romanized}</div> : null}
+                      <div className="text-xs font-bold text-[#777777]">{o.label}</div>
+                    </div>
+                    <div className="rounded-full bg-[#CCFBF1] px-3 py-1 text-xs font-black text-[#0B7C7B]">
+                      {Math.round(o.score * 100)}%
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm font-bold text-[#777777]">No objects detected. Try a clearer photo.</p>
+            )}
+          </ResultCard>
 
-            {/* Sentences */}
-            <div className="space-y-4">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.15em]" style={{ color: "rgba(225,224,204,0.5)" }}>
-                Practice sentences
-              </h2>
-              {analysis.sentences.length > 0 ? (
-                <ul className="space-y-3">
-                  {analysis.sentences.map((s, i) => (
-                    <motion.li
-                      key={i}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: i * 0.07, ease: EASE }}
-                      className="rounded-xl border px-4 py-3"
-                      style={{ borderColor: "rgba(225,224,204,0.1)", background: "#101010" }}
-                    >
-                      <div className="text-base text-[#E1E0CC]">{s.target}</div>
-                      <div className="mt-1 text-xs" style={{ color: "rgba(225,224,204,0.45)" }}>{s.gloss}</div>
-                    </motion.li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm" style={{ color: "rgba(225,224,204,0.4)" }}>
-                  No sentences generated. Retry the photo.
-                </p>
-              )}
-            </div>
-          </motion.div>
-        </AnimatePresence>
-      )}
+          <ResultCard title="Practice sentences">
+            {analysis.sentences.length > 0 ? (
+              <ul className="space-y-3">
+                {analysis.sentences.map((s, i) => (
+                  <li key={`${s.target}-${i}`} className="duo-soft-panel p-4">
+                    <div className={`text-base font-black text-[#3C3C3C] ${s.targetSegments ? "has-furi" : ""}`}>
+                      <Furi text={s.target} segments={s.targetSegments} />
+                    </div>
+                    {s.romanized ? <div className="mt-1 text-sm font-bold italic text-[#7C3AED]">{s.romanized}</div> : null}
+                    <div className="mt-1 text-xs font-bold text-[#777777]">{s.gloss}</div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm font-bold text-[#777777]">No sentences generated. Retry the photo.</p>
+            )}
+          </ResultCard>
+        </motion.div>
+      ) : null}
     </div>
   );
 }
+
+function ResultCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="duo-card p-5">
+      <h2 className="duo-eyebrow mb-4">{title}</h2>
+      {children}
+    </section>
+  );
+}
+

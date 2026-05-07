@@ -1,34 +1,36 @@
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { Sparkles } from "lucide-react";
 import { getSession } from "@/lib/auth/session";
-import { db } from "@/lib/db/client";
-import { profiles } from "@/lib/db/schema";
 import { OnboardingForm } from "./OnboardingForm";
 
 export default async function OnboardingPage() {
   const session = await getSession();
   if (!session) redirect("/");
-
-  const [existing] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.userId, session.userId))
-    .limit(1);
-
-  if (existing) redirect("/practice");
+  if (session.targetLang && session.level) redirect("/practice");
 
   return (
-    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center px-6 py-10 bg-black min-h-screen">
-      <div className="mb-8 space-y-2">
-        <div className="text-xs uppercase tracking-[0.2em]" style={{ color: "rgba(225,224,204,0.4)" }}>
-          Welcome to DialogueDock
+    <main className="min-h-screen bg-[#F8FBFF] px-4 py-8 sm:px-6">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-3xl flex-col justify-center">
+        <div className="duo-card overflow-hidden">
+          <div className="bg-[#0EA5A4] p-6 text-white sm:p-8">
+            <div className="flex items-center gap-4">
+              <div className="grid h-14 w-14 place-items-center rounded-2xl bg-white text-[#0B7C7B] shadow-[0_4px_0_rgba(0,0,0,0.12)]">
+                <Sparkles size={28} />
+              </div>
+              <div>
+                <div className="text-xs font-black uppercase text-white/80">
+                  Welcome to DialogueDock
+                </div>
+                <h1 className="text-3xl font-black leading-tight">Set up your course</h1>
+              </div>
+            </div>
+          </div>
+          <div className="p-5 sm:p-8">
+            <OnboardingForm />
+          </div>
         </div>
-        <h1 className="text-3xl font-semibold tracking-tight text-[#E1E0CC]">Set up your profile</h1>
-        <p style={{ color: "rgba(225,224,204,0.55)" }}>
-          Pick your native and target languages, plus your current level.
-        </p>
       </div>
-      <OnboardingForm />
     </main>
   );
 }
+

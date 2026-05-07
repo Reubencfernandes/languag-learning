@@ -2,17 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-const kPrimary = Color(0xFFDEDBC8);
-const kForeground = Color(0xFFE1E0CC);
-const kBackground = Color(0xFF000000);
-const kCard = Color(0xFF101010);
-const kCardFeature = Color(0xFF212121);
-const kBorder = Color(0x1FE1E0CC);
-const kMuted = Color(0xB3E1E0CC);
+const kPrimary = Color(0xFF0EA5A4);
+const kPrimaryShadow = Color(0xFF0B7C7B);
+const kSecondary = Color(0xFF7C3AED);
+const kSecondaryShadow = Color(0xFF5B21B6);
+const kWarning = Color(0xFFF59E0B);
+const kDanger = Color(0xFFF43F5E);
+const kDangerShadow = Color(0xFFBE123C);
+const kForeground = Color(0xFF3C3C3C);
+const kMuted = Color(0xFF777777);
+const kBackground = Color(0xFFF8FBFF);
+const kCard = Color(0xFFFFFFFF);
+const kCardFeature = Color(0xFFF7F7F7);
+const kBorder = Color(0xFFE5E5E5);
 
 ThemeData buildTheme() {
-  final almarai = GoogleFonts.almaraiTextTheme(
-    ThemeData.dark().textTheme.apply(
+  final textTheme = GoogleFonts.nunitoTextTheme(
+    ThemeData.light().textTheme.apply(
           bodyColor: kForeground,
           displayColor: kForeground,
         ),
@@ -20,59 +26,76 @@ ThemeData buildTheme() {
 
   return ThemeData(
     useMaterial3: true,
-    brightness: Brightness.dark,
+    brightness: Brightness.light,
     scaffoldBackgroundColor: kBackground,
-    colorScheme: const ColorScheme.dark(
+    colorScheme: const ColorScheme.light(
       primary: kPrimary,
-      onPrimary: kBackground,
-      secondary: kPrimary,
-      onSecondary: kBackground,
+      onPrimary: Colors.white,
+      secondary: kSecondary,
+      onSecondary: Colors.white,
       surface: kCard,
       onSurface: kForeground,
       outline: kBorder,
+      error: kDanger,
+      onError: Colors.white,
     ),
-    textTheme: almarai,
+    textTheme: textTheme,
     appBarTheme: AppBarTheme(
-      backgroundColor: kBackground,
+      backgroundColor: kCard,
       foregroundColor: kForeground,
       elevation: 0,
+      centerTitle: false,
       surfaceTintColor: Colors.transparent,
-      systemOverlayStyle: SystemUiOverlayStyle.light,
-      titleTextStyle: GoogleFonts.almarai(
+      systemOverlayStyle: SystemUiOverlayStyle.dark,
+      titleTextStyle: GoogleFonts.nunito(
         color: kForeground,
-        fontWeight: FontWeight.w600,
-        fontSize: 17,
+        fontWeight: FontWeight.w900,
+        fontSize: 20,
       ),
       iconTheme: const IconThemeData(color: kMuted),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: kPrimary,
-        foregroundColor: kBackground,
-        minimumSize: const Size(0, 48),
-        shape: const StadiumBorder(),
-        textStyle: GoogleFonts.almarai(fontWeight: FontWeight.w500, fontSize: 15),
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: kBorder,
+        disabledForegroundColor: const Color(0xFFAFAFAF),
+        minimumSize: const Size(0, 52),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        textStyle: GoogleFonts.nunito(fontWeight: FontWeight.w900, fontSize: 15),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: kMuted,
-        minimumSize: const Size(0, 48),
-        shape: const StadiumBorder(),
-        side: const BorderSide(color: kBorder),
+        foregroundColor: kSecondary,
+        minimumSize: const Size(0, 52),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        side: const BorderSide(color: kBorder, width: 2),
+        textStyle: GoogleFonts.nunito(fontWeight: FontWeight.w900, fontSize: 15),
       ),
     ),
-    cardTheme: const CardThemeData(
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: kSecondary,
+        textStyle: GoogleFonts.nunito(fontWeight: FontWeight.w900),
+      ),
+    ),
+    cardTheme: CardThemeData(
       color: kCard,
       elevation: 0,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(16)),
-        side: BorderSide(color: kBorder),
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: kBorder, width: 2),
       ),
     ),
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: kBackground,
-      indicatorColor: kPrimary.withAlpha(40),
+      height: 72,
+      backgroundColor: kCard,
+      indicatorColor: kPrimary.withAlpha(38),
+      surfaceTintColor: Colors.transparent,
       iconTheme: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
           return const IconThemeData(color: kPrimary);
@@ -81,39 +104,78 @@ ThemeData buildTheme() {
       }),
       labelTextStyle: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
-          return GoogleFonts.almarai(color: kPrimary, fontSize: 12, fontWeight: FontWeight.w600);
+          return GoogleFonts.nunito(color: kPrimary, fontSize: 12, fontWeight: FontWeight.w900);
         }
-        return GoogleFonts.almarai(color: kMuted, fontSize: 12);
+        return GoogleFonts.nunito(color: kMuted, fontSize: 12, fontWeight: FontWeight.w800);
       }),
-      surfaceTintColor: Colors.transparent,
+    ),
+    tabBarTheme: TabBarThemeData(
+      labelColor: Colors.white,
+      unselectedLabelColor: kMuted,
+      indicatorSize: TabBarIndicatorSize.tab,
+      labelStyle: GoogleFonts.nunito(fontWeight: FontWeight.w900),
+      unselectedLabelStyle: GoogleFonts.nunito(fontWeight: FontWeight.w900),
     ),
     dividerColor: kBorder,
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: kCard,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: kBorder),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: kBorder, width: 2),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: kBorder),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: kBorder, width: 2),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: kPrimary, width: 1.5),
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: kSecondary, width: 2),
       ),
-      hintStyle: const TextStyle(color: kMuted),
-      labelStyle: const TextStyle(color: kMuted),
+      hintStyle: const TextStyle(color: kMuted, fontWeight: FontWeight.w700),
+      labelStyle: const TextStyle(color: kMuted, fontWeight: FontWeight.w800),
     ),
-    snackBarTheme: const SnackBarThemeData(
+    chipTheme: ChipThemeData(
       backgroundColor: kCard,
-      contentTextStyle: TextStyle(color: kForeground),
+      selectedColor: const Color(0xFFEDE9FE),
+      disabledColor: kBorder,
+      labelStyle: GoogleFonts.nunito(color: kForeground, fontWeight: FontWeight.w900),
+      secondaryLabelStyle: GoogleFonts.nunito(color: kSecondary, fontWeight: FontWeight.w900),
+      side: const BorderSide(color: kBorder, width: 2),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     ),
-    dialogTheme: const DialogThemeData(
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: kForeground,
+      contentTextStyle: GoogleFonts.nunito(color: Colors.white, fontWeight: FontWeight.w800),
+      behavior: SnackBarBehavior.floating,
+    ),
+    dialogTheme: DialogThemeData(
       backgroundColor: kCard,
-      titleTextStyle: TextStyle(color: kForeground, fontSize: 18, fontWeight: FontWeight.w600),
-      contentTextStyle: TextStyle(color: kMuted),
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      titleTextStyle: GoogleFonts.nunito(color: kForeground, fontSize: 20, fontWeight: FontWeight.w900),
+      contentTextStyle: GoogleFonts.nunito(color: kMuted, fontWeight: FontWeight.w700),
+    ),
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: kCard,
+      surfaceTintColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
     ),
   );
 }
+
+BoxDecoration duoCardDecoration({Color color = kCard}) {
+  return BoxDecoration(
+    color: color,
+    borderRadius: BorderRadius.circular(18),
+    border: Border.all(color: kBorder, width: 2),
+    boxShadow: const [
+      BoxShadow(color: kBorder, offset: Offset(0, 4), blurRadius: 0),
+    ],
+  );
+}
+
+

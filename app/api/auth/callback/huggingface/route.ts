@@ -1,8 +1,5 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
-import { db } from "@/lib/db/client";
-import { users } from "@/lib/db/schema";
 import { hfExchangeCode, hfFetchUser } from "@/lib/auth/hf";
 import { SESSION_COOKIE, signSession, SESSION_MAX_AGE } from "@/lib/auth/session";
 
@@ -43,22 +40,13 @@ export async function GET(req: Request) {
   const accessToken = tokens.accessToken();
   const hfUser = await hfFetchUser(accessToken);
 
-  const [existing] = await db.select().from(users).where(eq(users.hfId, hfUser.sub)).limit(1);
-  const user = existing
-    ? existing
-    : (
-        await db
-          .insert(users)
-          .values({
-            hfId: hfUser.sub,
-            hfUsername: hfUser.preferred_username,
-            email: hfUser.email,
-            avatarUrl: hfUser.picture,
-          })
-          .returning()
-      )[0];
-
-  const jwt = await signSession({ userId: user.id, hfUsername: user.hfUsername });
+  const jwt = await signSession({
+    hfId: hfUser.sub,
+    hfUsername: hfUser.preferred_username,
+    email: hfUser.email,
+    avatarUrl: hfUser.picture,
+    accessToken,
+  });
 
   if (clientKind === "mobile") {
     return NextResponse.redirect(`langlearn://auth/callback?token=${encodeURIComponent(jwt)}`);
@@ -74,3 +62,4 @@ export async function GET(req: Request) {
   });
   return res;
 }
+

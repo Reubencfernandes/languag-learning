@@ -7,7 +7,6 @@ import '../features/home/home_shell.dart';
 import '../features/login/login_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/practice/dialogue_screen.dart';
-import '../features/practice/story_screen.dart';
 
 GoRouter buildRouter(WidgetRef ref) {
   return GoRouter(
@@ -35,10 +34,6 @@ GoRouter buildRouter(WidgetRef ref) {
       GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingScreen()),
       GoRoute(path: '/home', builder: (_, __) => const HomeShell()),
       GoRoute(
-        path: '/practice/:id',
-        builder: (_, s) => StoryScreen(storyId: s.pathParameters['id']!),
-      ),
-      GoRoute(
         path: '/dialogue/:id',
         builder: (_, s) => DialogueScreen(dialogueId: s.pathParameters['id']!),
       ),
@@ -52,3 +47,5 @@ class _Splash extends StatelessWidget {
   Widget build(BuildContext context) =>
       const Scaffold(body: Center(child: CircularProgressIndicator()));
 }
+
+

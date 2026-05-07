@@ -2,15 +2,16 @@
 
 export default function AppError({ error, reset }: { error: Error; reset: () => void }) {
   return (
-    <section className="space-y-4 py-10 text-center">
-      <h1 className="text-2xl font-semibold">Something went wrong.</h1>
-      <p className="text-sm text-[--color-muted]">{error.message || "Please try again."}</p>
+    <section className="duo-card mx-auto max-w-md space-y-4 p-8 text-center">
+      <h1 className="text-2xl font-black text-[#3C3C3C]">Something went wrong</h1>
+      <p className="text-sm font-bold text-[#777777]">{error.message || "Please try again."}</p>
       <button
         onClick={reset}
-        className="h-11 rounded-full bg-[--color-accent] px-6 text-sm font-medium text-[--color-accent-foreground]"
+        className="btn-duo btn-duo-primary"
       >
         Try again
       </button>
     </section>
   );
 }
+

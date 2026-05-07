@@ -1,8 +1,13 @@
 import { InferenceClient } from "@huggingface/inference";
 import { languageName, type Level } from "@/lib/languages";
 
-const hf = new InferenceClient(process.env.HF_TOKEN);
 const MODEL = "mistralai/Mistral-7B-Instruct-v0.3";
+
+function createClient(accessToken?: string) {
+  const token = accessToken || process.env.HF_TOKEN;
+  if (!token) throw new Error("No HuggingFace access token available");
+  return new InferenceClient(token);
+}
 
 export type ExampleSentence = { target: string; gloss: string };
 
@@ -12,16 +17,19 @@ export async function generateSentencesForImage(opts: {
   targetLang: string;
   nativeLang: string;
   level: Level;
+  accessToken?: string;
 }): Promise<ExampleSentence[]> {
   const target = languageName(opts.targetLang);
   const native = languageName(opts.nativeLang);
   const system =
-    `You are a language tutor. Given a photo caption and list of visible objects, produce 3 short example sentences in ${target} ` +
+    `You are a language tutor. Given a photo caption and list of visible objects, produce example sentences in ${target} ` +
     `at CEFR ${opts.level} level describing what's in the image. Each sentence must come with a natural ${native} gloss. ` +
     `Output STRICT JSON: {"sentences": [{"target": string, "gloss": string}, ...]}.`;
   const user = `Caption: ${opts.captionEn}\nObjects: ${opts.objectsEn.join(", ") || "(none)"}\n`;
 
+  const hf = createClient(opts.accessToken);
   const res = await hf.chatCompletion({
+    provider: "auto",
     model: MODEL,
     messages: [
       { role: "system", content: system },
@@ -49,3 +57,4 @@ function safeParse(raw: string): Record<string, unknown> {
     return m ? (JSON.parse(m[0]) as Record<string, unknown>) : {};
   }
 }
+

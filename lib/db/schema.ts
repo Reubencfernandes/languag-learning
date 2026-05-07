@@ -117,3 +117,4 @@ export const storyReadsRelations = relations(storyReads, ({ one }) => ({
 export const dialoguesRelations = relations(dialogues, ({ one }) => ({
   author: one(users, { fields: [dialogues.createdBy], references: [users.id] }),
 }));
+

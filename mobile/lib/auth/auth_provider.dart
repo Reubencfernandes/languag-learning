@@ -46,15 +46,39 @@ class Profile {
         targetLang: j['targetLang'] as String,
         level: j['level'] as String,
       );
+
+  Map<String, dynamic> toJson() => {
+        'nativeLang': nativeLang,
+        'targetLang': targetLang,
+        'level': level,
+      };
 }
 
 class AuthController extends StateNotifier<AuthState> {
   AuthController(this._api, this._store) : super(const AuthState(status: AuthStatus.unknown)) {
-    refresh();
+    _initFromCache();
   }
 
   final ApiClient _api;
   final SessionStore _store;
+
+  /// On startup: immediately restore any cached profile so the UI is not blank,
+  /// then kick off a background refresh from the server.
+  Future<void> _initFromCache() async {
+    final token = await _store.read();
+    if (token == null) {
+      state = const AuthState(status: AuthStatus.signedOut);
+      return;
+    }
+    // Try to restore profile from local cache for instant UI.
+    final cached = await _store.readProfile();
+    if (cached != null) {
+      final profile = Profile.fromJson(cached);
+      state = AuthState(status: AuthStatus.ready, profile: profile);
+    }
+    // Always refresh from server in the background.
+    await refresh();
+  }
 
   Future<void> refresh() async {
     final token = await _store.read();
@@ -68,6 +92,12 @@ class AuthController extends StateNotifier<AuthState> {
         final user = User.fromJson(res.data!['user'] as Map<String, dynamic>);
         final pjson = res.data!['profile'] as Map<String, dynamic>?;
         final profile = pjson == null ? null : Profile.fromJson(pjson);
+        // Persist locally.
+        if (profile != null) {
+          await _store.writeProfile(profile.toJson());
+        } else {
+          await _store.clearProfile();
+        }
         state = AuthState(
           status: profile == null ? AuthStatus.noProfile : AuthStatus.ready,
           user: user,
@@ -79,7 +109,11 @@ class AuthController extends StateNotifier<AuthState> {
       }
     } catch (e) {
       debugPrint('auth refresh failed: $e');
-      state = const AuthState(status: AuthStatus.signedOut);
+      // Keep the cached state if we already have one; only fall back to signedOut
+      // if there is nothing cached.
+      if (state.status == AuthStatus.unknown) {
+        state = const AuthState(status: AuthStatus.signedOut);
+      }
     }
   }
 
@@ -101,7 +135,7 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> signOut() async {
-    await _store.clear();
+    await _store.clear(); // clears JWT + profile cache
     state = const AuthState(status: AuthStatus.signedOut);
   }
 
@@ -112,10 +146,23 @@ class AuthController extends StateNotifier<AuthState> {
     );
     if (res.statusCode == 200 && res.data != null) {
       final p = Profile.fromJson(res.data!['profile'] as Map<String, dynamic>);
+      // Persist locally immediately.
+      await _store.writeProfile(p.toJson());
       state = state.copyWith(status: AuthStatus.ready, profile: p);
     } else {
       throw Exception((res.data?['message'] ?? res.data?['error'] ?? 'save failed').toString());
     }
+  }
+
+  /// Change only the CEFR level without a full profile re-save form.
+  Future<void> updateLevel(String level) async {
+    final current = state.profile;
+    if (current == null) return;
+    await saveProfile(
+      nativeLang: current.nativeLang,
+      targetLang: current.targetLang,
+      level: level,
+    );
   }
 }
 
@@ -124,3 +171,5 @@ final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
   final store = ref.watch(sessionStoreProvider);
   return AuthController(api, store);
 });
+
+

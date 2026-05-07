@@ -1,25 +1,17 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
 import { put } from "@vercel/blob";
 import { getSession } from "@/lib/auth/session";
-import { db } from "@/lib/db/client";
-import { profiles, visionJobs } from "@/lib/db/schema";
 import { analyzeWithGemma } from "@/lib/hf/gemma-vision";
-import type { Level } from "@/lib/languages";
+import { LEVELS, type Level } from "@/lib/languages";
 
 export const maxDuration = 90;
 
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "unauthenticated" }, { status: 401 });
-
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.userId, session.userId))
-    .limit(1);
-  if (!profile) return NextResponse.json({ error: "no_profile" }, { status: 400 });
-
+  if (!session.targetLang || !session.nativeLang || !session.level) {
+    return NextResponse.json({ error: "no_profile" }, { status: 400 });
+  }
   const form = await req.formData().catch(() => null);
   const file = form?.get("image");
   if (!(file instanceof File)) return NextResponse.json({ error: "missing_image" }, { status: 400 });
@@ -29,32 +21,36 @@ export async function POST(req: Request) {
   const imageBase64 = buf.toString("base64");
   const mimeType = file.type || "image/jpeg";
 
+  const requestedLevel = String(form?.get("level") ?? "");
+  const level = (LEVELS as readonly string[]).includes(requestedLevel)
+    ? (requestedLevel as Level)
+    : (session.level as Level);
+
   try {
     const result = await analyzeWithGemma({
       imageBase64,
       mimeType,
-      targetLang: profile.targetLang,
-      nativeLang: profile.nativeLang,
-      level: profile.level as Level,
+      targetLang: session.targetLang,
+      nativeLang: session.nativeLang,
+      level,
+      accessToken: session.accessToken,
     });
 
-    // Map Gemma objects to the existing visionJobs schema shape
     const mappedObjects = result.objects.map((o) => ({
       label: o.labelEn,
       translation: o.labelTarget,
-      // Gemma returns normalized 0-1 coords; visionJobs stores pixel-space ints.
-      // We store as-is since the camera client now reads them as 0-1 fractions.
+      translationSegments: o.labelTargetSegments,
+      romanized: o.romanized,
       box: o.box,
       score: 1,
     }));
 
-    // Store blob if configured
     let imageUrl = "";
     if (process.env.BLOB_READ_WRITE_TOKEN) {
       try {
         const blob = new Blob([buf], { type: mimeType });
         const upload = await put(
-          `vision/${session.userId}/${Date.now()}-${file.name || "photo.jpg"}`,
+          `vision/${session.hfId}/${Date.now()}-${file.name || "photo.jpg"}`,
           blob,
           { access: "public", contentType: mimeType },
         );
@@ -64,19 +60,8 @@ export async function POST(req: Request) {
       }
     }
 
-    const [job] = await db
-      .insert(visionJobs)
-      .values({
-        userId: session.userId,
-        imageUrl,
-        caption: result.caption,
-        objects: mappedObjects,
-        sentences: result.sentences,
-      })
-      .returning();
-
     return NextResponse.json({
-      id: job.id,
+      id: crypto.randomUUID(),
       caption: result.caption,
       objects: mappedObjects,
       sentences: result.sentences,
@@ -84,6 +69,15 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("Gemma vision failed", err);
-    return NextResponse.json({ error: "inference_failed" }, { status: 502 });
+    // Extract human-readable message from HuggingFace ProviderApiError
+    const hfMessage =
+      (err as { httpResponse?: { body?: { message?: string } } })?.httpResponse?.body?.message ??
+      (err instanceof Error ? err.message : null);
+    const status = (err as { httpResponse?: { status?: number } })?.httpResponse?.status ?? 502;
+    return NextResponse.json(
+      { error: "inference_failed", message: hfMessage ?? "Gemma analysis failed. Please try again." },
+      { status: status === 429 ? 429 : 502 },
+    );
   }
 }
+

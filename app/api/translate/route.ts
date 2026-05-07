@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   if (cache.has(key)) return NextResponse.json({ translation: cache.get(key), cached: true });
 
   try {
-    const translation = await translate({ text, from, to });
+    const translation = await translate({ text, from, to, accessToken: session.accessToken });
     if (cache.size >= MAX_CACHE) {
       const firstKey = cache.keys().next().value;
       if (firstKey) cache.delete(firstKey);
@@ -42,3 +42,4 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "inference_failed" }, { status: 502 });
   }
 }
+

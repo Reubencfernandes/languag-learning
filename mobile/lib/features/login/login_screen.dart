@@ -7,22 +7,21 @@ import '../../theme/app_theme.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
+
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen>
-    with SingleTickerProviderStateMixin {
+class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProviderStateMixin {
   bool _loading = false;
-  bool _hovered = false;
   String? _error;
-  late AnimationController _ctrl;
-  late Animation<double> _fade;
+  late final AnimationController _ctrl;
+  late final Animation<double> _fade;
 
   @override
   void initState() {
     super.initState();
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 650));
     _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
     _ctrl.forward();
   }
@@ -40,7 +39,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     });
     try {
       await ref.read(authControllerProvider.notifier).signInWithHuggingFace();
-    } catch (e) {
+    } catch (_) {
       setState(() => _error = 'Sign in failed. Please try again.');
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -50,100 +49,80 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kBackground,
       body: SafeArea(
-        child: FadeTransition(
-          opacity: _fade,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Spacer(flex: 2),
-                Builder(builder: (context) {
-                  final w = MediaQuery.of(context).size.width;
-                  final titleSize = w >= 900 ? 40.0 : w >= 600 ? 48.0 : 56.0;
-                  return Text(
-                    'DialogueDock',
-                    style: GoogleFonts.almarai(
-                      color: kForeground,
-                      fontSize: titleSize,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -2,
-                      height: 1.0,
-                    ),
-                  );
-                }),
-                const SizedBox(height: 20),
-                Text(
-                  'Learn a new language through natural dialogues. Start thinking like a native speaker and stop translating.',
-                  style: GoogleFonts.almarai(
-                    color: kMuted,
-                    fontSize: 15,
-                    height: 1.4,
-                  ),
-                ),
-                const Spacer(flex: 2),
-                // Pill button with arrow circle
-                MouseRegion(
-                  onEnter: (_) => setState(() => _hovered = true),
-                  onExit: (_) => setState(() => _hovered = false),
-                  child: GestureDetector(
-                  onTap: _loading ? null : _signIn,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: _hovered ? const Color(0xFFFB923C) : kPrimary,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    padding: const EdgeInsets.only(left: 24, right: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _loading ? 'Opening browser…' : 'Start with HuggingFace',
-                            style: GoogleFonts.almarai(
-                              color: _hovered ? Colors.white : kBackground,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 15,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: kBackground,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.arrow_forward,
-                              color: kPrimary, size: 18),
-                        ),
-                      ],
-                    ),
-                  ),
-                  ),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: FadeTransition(
+              opacity: _fade,
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                children: [
+                  const SizedBox(height: 24),
+                  const Center(child: _BrandMark()),
+                  const SizedBox(height: 28),
                   Text(
-                    _error!,
+                    'DialogueDock',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+                    style: GoogleFonts.nunito(
+                      color: kForeground,
+                      fontSize: 46,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Quick dialogues, phrase breakdowns, and photo vocabulary in one daily lesson flow.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.nunito(
+                      color: kMuted,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  FilledButton.icon(
+                    onPressed: _loading ? null : _signIn,
+                    icon: _loading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.play_arrow_rounded),
+                    label: Text(_loading ? 'Opening browser...' : 'Start learning'),
+                  ),
+                  const SizedBox(height: 14),
+                  OutlinedButton(
+                    onPressed: _loading ? null : _signIn,
+                    child: const Text('I already have an account'),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFE4E6),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFFECDD3), width: 2),
+                      ),
+                      child: Text(
+                        _error!,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.nunito(color: kDangerShadow, fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 18),
+                  Text(
+                    'We use your Hugging Face account for sign in.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.nunito(color: kMuted, fontSize: 12, fontWeight: FontWeight.w700),
                   ),
                 ],
-                const SizedBox(height: 16),
-                Text(
-                  'We use your HuggingFace account for identity and inference. No password stored.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.almarai(
-                    color: kMuted.withAlpha(100),
-                    fontSize: 11,
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
+              ),
             ),
           ),
         ),
@@ -151,3 +130,49 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
   }
 }
+
+class _BrandMark extends StatelessWidget {
+  const _BrandMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 112,
+      height: 112,
+      decoration: BoxDecoration(
+        color: kPrimary,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: const [BoxShadow(color: kPrimaryShadow, offset: Offset(0, 6), blurRadius: 0)],
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 68,
+            height: 68,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: const Icon(Icons.explore_rounded, color: kSecondary, size: 42),
+          ),
+          Positioned(
+            right: 19,
+            top: 21,
+            child: Container(
+              width: 14,
+              height: 14,
+              decoration: const BoxDecoration(
+                color: kWarning,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+

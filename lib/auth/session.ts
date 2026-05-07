@@ -11,8 +11,14 @@ function secret() {
 }
 
 export type SessionPayload = {
-  userId: string;
+  hfId: string;
   hfUsername: string;
+  email?: string;
+  avatarUrl?: string;
+  nativeLang?: string;
+  targetLang?: string;
+  level?: string;
+  accessToken?: string;
 };
 
 export async function signSession(payload: SessionPayload): Promise<string> {
@@ -26,8 +32,17 @@ export async function signSession(payload: SessionPayload): Promise<string> {
 export async function verifySession(token: string): Promise<SessionPayload | null> {
   try {
     const { payload } = await jwtVerify<SessionPayload>(token, secret(), { algorithms: ["HS256"] });
-    if (!payload.userId) return null;
-    return { userId: payload.userId, hfUsername: payload.hfUsername };
+    if (!payload.hfId) return null;
+    return {
+      hfId: payload.hfId,
+      hfUsername: payload.hfUsername,
+      email: payload.email,
+      avatarUrl: payload.avatarUrl,
+      nativeLang: payload.nativeLang,
+      targetLang: payload.targetLang,
+      level: payload.level,
+      accessToken: payload.accessToken,
+    };
   } catch {
     return null;
   }
@@ -59,3 +74,4 @@ export async function clearSessionCookie() {
 }
 
 export const SESSION_MAX_AGE = SESSION_TTL_SECONDS;
+

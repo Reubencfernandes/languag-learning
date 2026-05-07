@@ -36,43 +36,35 @@ export function OnboardingForm() {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-8">
-      <div className="grid gap-6 sm:grid-cols-2">
+    <form onSubmit={submit} className="space-y-7">
+      <div className="grid gap-4 sm:grid-cols-2">
         <LangSelect label="I speak" value={nativeLang} onChange={setNativeLang} />
         <LangSelect label="I want to learn" value={targetLang} onChange={setTargetLang} exclude={nativeLang} />
       </div>
 
       <div className="space-y-3">
-        <div className="text-sm font-medium text-[#E1E0CC]">My current level</div>
-        <div className="grid gap-2 sm:grid-cols-5">
-          {LEVELS.map((l) => (
+        <div className="text-base font-black text-[#3C3C3C]">My current level</div>
+        <div className="grid gap-3 sm:grid-cols-5">
+          {LEVELS.map((candidate) => (
             <button
               type="button"
-              key={l}
-              onClick={() => setLevel(l)}
-              className="rounded-xl border px-3 py-3 text-left transition"
-              style={{
-                borderColor: level === l ? "rgba(222,219,200,0.6)" : "rgba(225,224,204,0.1)",
-                background: level === l ? "rgba(222,219,200,0.08)" : "#101010",
-              }}
+              key={candidate}
+              onClick={() => setLevel(candidate)}
+              className={`card-duo px-4 py-4 text-left ${level === candidate ? "card-duo-active" : ""}`}
             >
-              <div className="text-base font-semibold text-[#E1E0CC]">{l}</div>
-              <div className="text-[11px] leading-snug" style={{ color: "rgba(225,224,204,0.45)" }}>
-                {LEVEL_DESCRIPTIONS[l]}
+              <div className="text-lg font-black text-[#3C3C3C]">{candidate}</div>
+              <div className="mt-1 text-xs font-bold leading-snug text-[#777777]">
+                {LEVEL_DESCRIPTIONS[candidate]}
               </div>
             </button>
           ))}
         </div>
       </div>
 
-      {error ? <div className="text-sm text-red-400">{error}</div> : null}
+      {error ? <div className="rounded-2xl border-2 border-[#FECDD3] bg-[#FFE4E6] p-3 text-sm font-black text-[#BE123C]">{error}</div> : null}
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="flex h-12 w-full items-center justify-center rounded-full bg-primary text-sm font-medium text-black transition hover:opacity-90 disabled:opacity-50"
-      >
-        {isPending ? "Saving…" : "Start learning"}
+      <button type="submit" disabled={isPending} className="btn-duo btn-duo-primary w-full">
+        {isPending ? "Saving..." : "Start learning"}
       </button>
     </form>
   );
@@ -91,19 +83,26 @@ function LangSelect({
 }) {
   return (
     <label className="block space-y-2">
-      <span className="text-sm font-medium text-[#E1E0CC]">{label}</span>
+      <span className="text-base font-black text-[#3C3C3C]">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-11 w-full rounded-lg border px-3 text-sm text-[#E1E0CC] bg-[#101010] focus:outline-none focus:border-primary/50"
-        style={{ borderColor: "rgba(225,224,204,0.15)" }}
+        className="duo-input h-14 cursor-pointer appearance-none pr-10 text-base"
+        style={{
+          backgroundImage:
+            'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%3E%3Cpath%20fill%3D%22%23777777%22%20d%3D%22M4%206l4%204%204-4z%22%2F%3E%3C%2Fsvg%3E")',
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "right 1rem center",
+          backgroundSize: "1rem auto",
+        }}
       >
-        {LANGUAGES.filter((l) => l.code !== exclude).map((l) => (
-          <option key={l.code} value={l.code}>
-            {l.name}
+        {LANGUAGES.filter((language) => language.code !== exclude).map((language) => (
+          <option key={language.code} value={language.code}>
+            {language.name}
           </option>
         ))}
       </select>
     </label>
   );
 }
+

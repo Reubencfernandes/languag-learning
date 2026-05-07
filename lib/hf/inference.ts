@@ -1,19 +1,8 @@
 import { InferenceClient } from "@huggingface/inference";
 import { floresCode, languageName, type Level } from "@/lib/languages";
 
-const hf = new InferenceClient(process.env.HF_TOKEN);
-
-const STORY_MODEL = "mistralai/Mistral-7B-Instruct-v0.3";
-const CAPTION_MODEL = "Salesforce/blip-image-captioning-large";
-const DETECT_MODEL = "facebook/detr-resnet-50";
+const STORY_MODEL = "google/gemma-4-26B-A4B-it";
 const TRANSLATE_MODEL = "facebook/nllb-200-distilled-600M";
-
-export type DetectedObject = {
-  label: string;
-  translation: string;
-  box: [number, number, number, number];
-  score: number;
-};
 
 export type StoryVocab = { word: string; gloss: string };
 
@@ -25,21 +14,37 @@ const LEVEL_BRIEFS: Record<Level, string> = {
   C1: "rich vocabulary, complex tense sequencing, sophisticated prose, 280-400 words.",
 };
 
+function createClient(accessToken?: string) {
+  const token = accessToken || process.env.HF_TOKEN;
+  if (!token) throw new Error("No HuggingFace access token available");
+  return new InferenceClient(token);
+}
+
 export async function generateStory(opts: {
   targetLang: string;
+  nativeLang: string;
   level: Level;
   topic?: string;
+  accessToken?: string;
 }): Promise<{ title: string; content: string; vocab: StoryVocab[] }> {
   const lang = languageName(opts.targetLang);
+  const native = languageName(opts.nativeLang);
   const brief = LEVEL_BRIEFS[opts.level];
   const topic = opts.topic?.trim() || "an everyday scene";
+  const isJapanese = opts.targetLang === "ja";
+  const japaneseRule = isJapanese
+    ? ` JAPANESE-SPECIFIC: every kanji compound in "title", "content", and "word" must be followed immediately by its hiragana reading in full-width parentheses, e.g. 漢字（かんじ）, 食（た）べる. Apply this consistently throughout the prose.`
+    : "";
   const system =
     `You are a language-learning story writer. Produce a short story in ${lang} at CEFR ${opts.level}. ` +
     `Constraints: ${brief} Keep it engaging and coherent. Avoid offensive content. ` +
-    `Output STRICT JSON with keys: title (string in ${lang}), content (string in ${lang} - paragraphs separated by \\n\\n), vocab (array of 6-10 objects each with "word" in ${lang} and "gloss" in English).`;
+    `LOCK every sentence to CEFR ${opts.level}: vocabulary, grammar tense complexity, and idiom load must all match. A real ${opts.level} learner should follow the story without reaching for a dictionary on every line. ` +
+    `Output STRICT JSON with keys: title (string in ${lang}), content (string in ${lang} - paragraphs separated by \\n\\n), vocab (array of 6-10 objects each with "word" in ${lang} and "gloss" in ${native}).${japaneseRule}`;
   const user = `Write a story about: ${topic}.`;
 
+  const hf = createClient(opts.accessToken);
   const res = await hf.chatCompletion({
+    provider: "auto",
     model: STORY_MODEL,
     messages: [
       { role: "system", content: system },
@@ -69,8 +74,10 @@ export async function translate(opts: {
   text: string;
   from: string;
   to: string;
+  accessToken?: string;
 }): Promise<string> {
   if (!opts.text.trim()) return "";
+  const hf = createClient(opts.accessToken);
   const res = await hf.translation({
     model: TRANSLATE_MODEL,
     inputs: opts.text,
@@ -81,32 +88,6 @@ export async function translate(opts: {
   });
   if (Array.isArray(res)) return (res[0] as { translation_text?: string })?.translation_text ?? "";
   return (res as { translation_text?: string }).translation_text ?? "";
-}
-
-export async function captionImage(opts: { image: Blob }): Promise<string> {
-  const res = await hf.imageToText({
-    model: CAPTION_MODEL,
-    data: opts.image,
-  });
-  return (res as { generated_text?: string }).generated_text ?? "";
-}
-
-export async function detectObjects(opts: { image: Blob; min_score?: number }): Promise<
-  Array<{ label: string; box: [number, number, number, number]; score: number }>
-> {
-  const res = (await hf.objectDetection({ model: DETECT_MODEL, data: opts.image })) as Array<{
-    label: string;
-    score: number;
-    box: { xmin: number; ymin: number; xmax: number; ymax: number };
-  }>;
-  const min = opts.min_score ?? 0.6;
-  return res
-    .filter((r) => r.score >= min)
-    .map((r) => ({
-      label: r.label,
-      score: r.score,
-      box: [r.box.xmin, r.box.ymin, r.box.xmax, r.box.ymax],
-    }));
 }
 
 function extractJson(raw: string): Record<string, unknown> {
@@ -120,3 +101,4 @@ function extractJson(raw: string): Record<string, unknown> {
     throw new Error("could not parse model JSON");
   }
 }
+

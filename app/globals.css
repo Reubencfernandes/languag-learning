@@ -2,37 +2,192 @@
 
 @theme {
   --color-primary: #DEDBC8;
-  --color-background: #000000;
-  --color-card: #101010;
-  --color-card-feature: #212121;
-  --color-border: rgba(225, 224, 204, 0.12);
-  --font-serif: "Instrument Serif", serif;
+  --color-primary-shadow: #0B7C7B;
+  --color-secondary: #7C3AED;
+  --color-secondary-shadow: #5B21B6;
+  --color-warning: #F59E0B;
+  --color-danger: #F43F5E;
+  --color-danger-shadow: #BE123C;
+  --color-background: #F8FBFF;
+  --color-card: #ffffff;
+  --color-card-feature: #f7f7f7;
+  --color-border: #e5e5e5;
+  --color-ink: #4b4b4b;
+  --color-muted: #777777;
 }
 
 @theme inline {
-  --font-sans: var(--font-almarai);
+  --font-sans: var(--font-almarai), "Almarai", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", sans-serif;
+  --font-serif: var(--font-instrument-serif), "Instrument Serif", serif;
 }
 
 :root {
-  --foreground: #E1E0CC;
-  --muted: rgba(225, 224, 204, 0.7);
-  --accent: #DEDBC8;
-  --accent-foreground: #000000;
+  --foreground: #4b4b4b;
+  --muted: #777777;
+  --accent: #0EA5A4;
+  --accent-foreground: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: var(--font-almarai), "Almarai", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", sans-serif;
+}
+
+html {
+  min-width: 320px;
 }
 
 body {
   background: #000000;
   color: #E1E0CC;
+  font-family: var(--font-almarai), "Almarai", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", sans-serif;
+  min-width: 320px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.btn-duo {
+  @apply relative inline-flex items-center justify-center rounded-2xl font-extrabold uppercase transition-all select-none;
+  letter-spacing: 0;
+  min-height: 48px;
+  padding: 12px 22px;
+}
+
+.btn-duo-primary {
+  @apply bg-[#0EA5A4] text-white;
+  box-shadow: 0 4px 0 #0B7C7B;
+}
+
+.btn-duo-secondary {
+  @apply bg-[#7C3AED] text-white;
+  box-shadow: 0 4px 0 #5B21B6;
+}
+
+.btn-duo-white {
+  @apply border-2 border-[#E5E5E5] bg-white text-[#7C3AED];
+  box-shadow: 0 4px 0 #e5e5e5;
+}
+
+.btn-duo-danger {
+  @apply bg-[#F43F5E] text-white;
+  box-shadow: 0 4px 0 #BE123C;
+}
+
+.btn-duo:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 transparent;
+}
+
+.btn-duo:disabled {
+  @apply cursor-not-allowed bg-[#E5E5E5] text-[#AFAFAF];
+  box-shadow: 0 4px 0 #d0d0d0;
+}
+
+.duo-card,
+.card-duo {
+  @apply rounded-2xl border-2 border-[#E5E5E5] bg-white transition-all;
+  box-shadow: 0 4px 0 #e5e5e5;
+}
+
+.duo-card-interactive,
+.card-duo {
+  @apply cursor-pointer;
+}
+
+.duo-card-interactive:hover,
+.card-duo:hover {
+  @apply border-[#D7D7D7];
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 #d7d7d7;
+}
+
+.duo-card-interactive:active,
+.card-duo:active:not(.card-duo-active) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 #e5e5e5;
+}
+
+.card-duo-active,
+.duo-card-active {
+  @apply border-[#7C3AED] bg-[#EDE9FE];
+  box-shadow: 0 4px 0 #5B21B6;
+}
+
+.duo-input {
+  @apply h-12 w-full rounded-2xl border-2 border-[#E5E5E5] bg-white px-4 text-sm font-bold text-[#4B4B4B] outline-none transition-colors placeholder:text-[#AFAFAF];
+  box-shadow: 0 3px 0 #e5e5e5;
+}
+
+.duo-input:focus {
+  @apply border-[#7C3AED];
+}
+
+.duo-chip {
+  @apply inline-flex items-center gap-2 rounded-full border-2 border-[#E5E5E5] bg-white px-3 py-1.5 text-xs font-extrabold uppercase text-[#777777];
+  letter-spacing: 0;
+}
+
+.duo-progress {
+  @apply h-4 overflow-hidden rounded-full bg-[#E5E5E5];
+}
+
+.duo-progress > span {
+  @apply block h-full rounded-full bg-[#0EA5A4];
+  box-shadow: inset 0 -2px 0 rgba(11, 124, 123, 0.35);
+}
+
+.duo-page-title {
+  @apply text-2xl font-black text-[#3C3C3C];
+  letter-spacing: 0;
+}
+
+.duo-eyebrow {
+  @apply text-xs font-black uppercase text-[#777777];
+  letter-spacing: 0;
+}
+
+.duo-soft-panel {
+  @apply rounded-2xl border-2 border-[#E5E5E5] bg-[#F7F7F7];
+}
+
+/* Furigana ruby text — readings rendered above kanji. Give the line a bit of
+   extra height so the rt doesn't crash into the line above. */
+ruby.ruby {
+  ruby-position: over;
+  ruby-align: center;
+}
+ruby.ruby > rt {
+  font-size: 0.55em;
+  font-weight: 700;
+  color: #6B7280;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  user-select: none;
+}
+.has-furi {
+  line-height: 2.1;
+}
+
+.duo-safe-bottom {
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+}
+
+.noise-overlay,
+.bg-noise {
+  background-repeat: repeat;
+  background-size: 160px 160px;
 }
 
 .noise-overlay {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 300px 300px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.58'/%3E%3C/svg%3E");
 }
 
 .bg-noise {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 200px 200px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.42'/%3E%3C/svg%3E");
 }
+

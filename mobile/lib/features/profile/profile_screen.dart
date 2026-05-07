@@ -6,75 +6,210 @@ import '../../auth/auth_provider.dart';
 import '../../core/languages.dart';
 import '../../theme/app_theme.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  bool _savingLevel = false;
+
+  Future<void> _changeLevel(String level) async {
+    setState(() => _savingLevel = true);
+    try {
+      await ref.read(authControllerProvider.notifier).updateLevel(level);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update level: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _savingLevel = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(authControllerProvider);
     final user = state.user;
     final profile = state.profile;
 
     return Scaffold(
-      backgroundColor: kBackground,
       appBar: AppBar(title: const Text('Profile')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          // Avatar + username
-          Row(children: [
-            CircleAvatar(
-              radius: 32,
-              backgroundColor: kPrimary,
-              backgroundImage: user?.avatarUrl != null
-                  ? NetworkImage(user!.avatarUrl!)
-                  : null,
-              child: user?.avatarUrl == null
-                  ? Text(
-                      user?.hfUsername.substring(0, 1).toUpperCase() ?? '?',
-                      style: GoogleFonts.almarai(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                          color: kBackground),
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Container(
+                decoration: duoCardDecoration(color: kSecondary),
+                padding: const EdgeInsets.all(20),
+                child: Row(
                   children: [
-                    Text(user?.hfUsername ?? '—',
-                        style: GoogleFonts.almarai(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: kForeground)),
-                    Text(user?.email ?? 'no email',
-                        style: GoogleFonts.almarai(
-                            color: kMuted, fontSize: 13)),
-                  ]),
+                    CircleAvatar(
+                      radius: 36,
+                      backgroundColor: Colors.white,
+                      backgroundImage: user?.avatarUrl != null ? NetworkImage(user!.avatarUrl!) : null,
+                      child: user?.avatarUrl == null
+                          ? Text(
+                              user?.hfUsername.substring(0, 1).toUpperCase() ?? '?',
+                              style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w900, color: kSecondary),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            user?.hfUsername ?? '-',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white),
+                          ),
+                          Text(
+                            user?.email ?? 'no email',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.nunito(color: Colors.white.withAlpha(215), fontSize: 13, fontWeight: FontWeight.w800),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (profile != null) ...[
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final twoColumns = constraints.maxWidth >= 620;
+                    return GridView.count(
+                      crossAxisCount: twoColumns ? 3 : 1,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: twoColumns ? 1.65 : 4.2,
+                      children: [
+                        _StatCard(icon: Icons.language, label: 'I speak', value: languageName(profile.nativeLang), tone: kSecondary),
+                        _StatCard(icon: Icons.school_rounded, label: 'Learning', value: languageName(profile.targetLang), tone: kPrimary),
+                        _StatCard(icon: Icons.emoji_events_rounded, label: 'Level', value: profile.level, tone: kWarning),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: duoCardDecoration(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('My level', style: GoogleFonts.nunito(color: kForeground, fontWeight: FontWeight.w900, fontSize: 18)),
+                      const SizedBox(height: 14),
+                      if (_savingLevel)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 12),
+                            child: CircularProgressIndicator(color: kPrimary, strokeWidth: 2),
+                          ),
+                        )
+                      else
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: kLevels.map((level) {
+                            final selected = profile.level == level;
+                            return InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: selected ? null : () => _changeLevel(level),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: selected ? const Color(0xFFEDE9FE) : kCard,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: selected ? kSecondary : kBorder, width: 2),
+                                  boxShadow: [BoxShadow(color: selected ? kSecondaryShadow : kBorder, offset: const Offset(0, 3), blurRadius: 0)],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(level, style: GoogleFonts.nunito(color: kForeground, fontWeight: FontWeight.w900, fontSize: 15)),
+                                    Text(
+                                      kLevelDescriptions[level] ?? '',
+                                      style: GoogleFonts.nunito(color: kMuted, fontWeight: FontWeight.w800, fontSize: 11),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 20),
+              OutlinedButton.icon(
+                onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
+                icon: const Icon(Icons.logout_rounded),
+                label: const Text('Sign out'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  const _StatCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.tone,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color tone;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: duoCardDecoration(),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(color: tone.withAlpha(34), borderRadius: BorderRadius.circular(15)),
+            child: Icon(icon, color: tone),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: GoogleFonts.nunito(color: kMuted, fontSize: 11, fontWeight: FontWeight.w900)),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.nunito(color: kForeground, fontSize: 15, fontWeight: FontWeight.w900),
+                ),
+              ],
             ),
-          ]),
-          const SizedBox(height: 24),
-
-          if (profile != null) ...[
-            _StatCard(label: 'I speak', value: languageName(profile.nativeLang)),
-            _StatCard(
-                label: "I'm learning",
-                value: languageName(profile.targetLang)),
-            _StatCard(
-                label: 'Level',
-                value:
-                    '${profile.level} — ${kLevelDescriptions[profile.level] ?? ''}'),
-          ],
-
-          const SizedBox(height: 24),
-
-          OutlinedButton.icon(
-            onPressed: () =>
-                ref.read(authControllerProvider.notifier).signOut(),
-            icon: const Icon(Icons.logout, size: 16),
-            label: const Text('Sign out'),
           ),
         ],
       ),
@@ -82,34 +217,4 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({required this.label, required this.value});
-  final String label;
-  final String value;
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: kCard,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: kBorder),
-        ),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label.toUpperCase(),
-              style: GoogleFonts.almarai(
-                  fontSize: 10, letterSpacing: 1.5, color: kMuted)),
-          const SizedBox(height: 6),
-          Text(value,
-              style: GoogleFonts.almarai(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: kForeground)),
-        ]),
-      ),
-    );
-  }
-}

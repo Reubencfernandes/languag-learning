@@ -30,6 +30,7 @@ export function hfBuildAuthUrl(redirectUri: string) {
     "openid",
     "profile",
     "email",
+    "inference-api",
   ]);
   return { url, state, verifier };
 }
@@ -50,3 +51,4 @@ export async function hfFetchUser(accessToken: string): Promise<HFUser> {
   if (!res.ok) throw new Error(`HF userinfo failed: ${res.status}`);
   return (await res.json()) as HFUser;
 }
+

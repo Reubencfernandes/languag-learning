@@ -1,17 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../core/api_client.dart';
 import '../../theme/app_theme.dart';
 
-// ── Data types ────────────────────────────────────────────────────────────────
-
 class DialogueOption {
-  DialogueOption(
-      {required this.text,
-      required this.isCorrect,
-      required this.feedback});
+  DialogueOption({required this.text, required this.isCorrect, required this.feedback});
   final String text;
   final bool isCorrect;
   final String feedback;
@@ -31,7 +24,8 @@ class DialogueTurn {
     this.speakerName,
     this.options,
   });
-  final String type; // 'narration' | 'character' | 'user_choice'
+
+  final String type;
   final String text;
   final String? translation;
   final String? speakerName;
@@ -43,10 +37,7 @@ class DialogueTurn {
         translation: j['translation'] as String?,
         speakerName: j['speakerName'] as String?,
         options: j['options'] is List
-            ? (j['options'] as List)
-                .map((o) =>
-                    DialogueOption.fromJson(o as Map<String, dynamic>))
-                .toList()
+            ? (j['options'] as List).map((o) => DialogueOption.fromJson(o as Map<String, dynamic>)).toList()
             : null,
       );
 }
@@ -59,6 +50,7 @@ class DialogueFull {
     required this.level,
     required this.turns,
   });
+
   final String id;
   final String title;
   final String scenario;
@@ -70,54 +62,59 @@ class DialogueFull {
         title: (j['title'] ?? '') as String,
         scenario: (j['scenario'] ?? '') as String,
         level: (j['level'] ?? '') as String,
-        turns: ((j['turns'] as List?) ?? [])
-            .map((t) => DialogueTurn.fromJson(t as Map<String, dynamic>))
-            .toList(),
+        turns: ((j['turns'] as List?) ?? []).map((t) => DialogueTurn.fromJson(t as Map<String, dynamic>)).toList(),
       );
 }
 
-// ── Provider ──────────────────────────────────────────────────────────────────
-
-final _dialogueProvider =
-    FutureProvider.autoDispose.family<DialogueFull, String>((ref, id) async {
-  final api = ref.watch(apiClientProvider);
-  final res =
-      await api.dio.get<Map<String, dynamic>>('/api/dialogues/$id');
-  return DialogueFull.fromJson(res.data!);
-});
-
-// ── Screen ────────────────────────────────────────────────────────────────────
-
-class DialogueScreen extends ConsumerWidget {
+class DialogueScreen extends StatelessWidget {
   const DialogueScreen({super.key, required this.dialogueId});
   final String dialogueId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(_dialogueProvider(dialogueId));
-    return async.when(
-      loading: () => const Scaffold(
-          backgroundColor: kBackground,
-          body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(
-          backgroundColor: kBackground,
-          body: Center(child: Text('Error: $e'))),
-      data: (dialogue) => _DialogueView(dialogue: dialogue),
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Dialogue')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: duoCardDecoration(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Dialogue no longer available',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.nunito(color: kForeground, fontSize: 20, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Generated dialogues are temporary and are not stored after you leave the practice screen.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.nunito(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800, height: 1.35),
+                ),
+                const SizedBox(height: 18),
+                OutlinedButton(onPressed: () => Navigator.of(context).maybePop(), child: const Text('Back')),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
 
-// ── Interactive dialogue view ─────────────────────────────────────────────────
-
-class _DialogueView extends StatefulWidget {
-  const _DialogueView({required this.dialogue});
+class DialogueLessonView extends StatefulWidget {
+  const DialogueLessonView({super.key, required this.dialogue, this.onMoreDialogues});
   final DialogueFull dialogue;
+  final VoidCallback? onMoreDialogues;
 
   @override
-  State<_DialogueView> createState() => _DialogueViewState();
+  State<DialogueLessonView> createState() => _DialogueLessonViewState();
 }
 
-class _DialogueViewState extends State<_DialogueView> {
+class _DialogueLessonViewState extends State<DialogueLessonView> {
   bool _started = false;
   int _turnIndex = 0;
   int _score = 0;
@@ -126,8 +123,7 @@ class _DialogueViewState extends State<_DialogueView> {
   bool _completed = false;
 
   List<DialogueTurn> get _turns => widget.dialogue.turns;
-  int get _totalChoices =>
-      _turns.where((t) => t.type == 'user_choice').length;
+  int get _totalChoices => _turns.where((turn) => turn.type == 'user_choice').length;
 
   void _advance() {
     if (_turnIndex + 1 >= _turns.length) {
@@ -144,7 +140,7 @@ class _DialogueViewState extends State<_DialogueView> {
       _chosen[turnIdx] = optIdx;
       if (correct) _score++;
     });
-    Future.delayed(const Duration(milliseconds: 1500), _advance);
+    Future.delayed(const Duration(milliseconds: 1200), _advance);
   }
 
   void _restart() {
@@ -160,106 +156,91 @@ class _DialogueViewState extends State<_DialogueView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kBackground,
-      appBar: AppBar(
-        title: Text(widget.dialogue.title,
-            style: GoogleFonts.almarai(fontSize: 16, fontWeight: FontWeight.w600)),
-        leading: BackButton(
-            onPressed: () => Navigator.of(context).maybePop(),
-            color: kMuted),
-      ),
-      body: SafeArea(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 400),
-          child: !_started
-              ? _buildStart(context)
-              : _completed
-                  ? _buildCompletion(context)
-                  : _buildConversation(),
+    return SafeArea(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: !_started
+                ? _buildStart()
+                : _completed
+                    ? _buildCompletion()
+                    : _buildConversation(),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildStart(BuildContext context) {
-    return Padding(
+  Widget _buildStart() {
+    return ListView(
       key: const ValueKey('start'),
       padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: kCard,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: kBorder),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Scenario',
-                    style: GoogleFonts.almarai(
-                        color: kMuted, fontSize: 11, letterSpacing: 1.5)),
-                const SizedBox(height: 8),
-                Text(widget.dialogue.scenario,
-                    style: GoogleFonts.almarai(
-                        color: kForeground, fontSize: 15, height: 1.5)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: duoCardDecoration(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _Chip('${_turns.length} turns'),
-              const SizedBox(width: 8),
-              _Chip('$_totalChoices choices'),
-              const SizedBox(width: 8),
-              _Chip(widget.dialogue.level),
+              _Eyebrow('SCENARIO', color: kSecondary),
+              const SizedBox(height: 8),
+              Text(
+                widget.dialogue.scenario,
+                style: GoogleFonts.nunito(color: kForeground, fontSize: 20, fontWeight: FontWeight.w900, height: 1.35),
+              ),
+              const SizedBox(height: 18),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _Chip('${_turns.length} turns'),
+                  _Chip('$_totalChoices choices'),
+                  _Chip(widget.dialogue.level),
+                ],
+              ),
             ],
           ),
-          const Spacer(),
-          FilledButton.icon(
-            onPressed: () => setState(() => _started = true),
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('Start dialogue'),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 24),
+        FilledButton.icon(
+          onPressed: () => setState(() => _started = true),
+          icon: const Icon(Icons.play_arrow_rounded),
+          label: const Text('Start dialogue'),
+        ),
+      ],
     );
   }
 
-  Widget _buildCompletion(BuildContext context) {
-    final pct = _totalChoices > 0
-        ? (_score / _totalChoices * 100).round()
-        : 100;
-    return Padding(
+  Widget _buildCompletion() {
+    final pct = _totalChoices > 0 ? (_score / _totalChoices * 100).round() : 100;
+    return ListView(
       key: const ValueKey('done'),
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.emoji_events, color: kPrimary, size: 52),
-          const SizedBox(height: 16),
-          Text('$pct%',
-              style: GoogleFonts.almarai(
-                  color: kForeground, fontSize: 48, fontWeight: FontWeight.w700)),
-          Text('$_score of $_totalChoices correct',
-              style: GoogleFonts.almarai(color: kMuted, fontSize: 14)),
-          const SizedBox(height: 32),
-          FilledButton.icon(
-            onPressed: _restart,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Try again'),
+      padding: const EdgeInsets.all(24),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(28),
+          decoration: duoCardDecoration(),
+          child: Column(
+            children: [
+              Container(
+                width: 78,
+                height: 78,
+                decoration: BoxDecoration(color: const Color(0xFFFEF3C7), borderRadius: BorderRadius.circular(24)),
+                child: const Icon(Icons.emoji_events_rounded, color: Color(0xFF92400E), size: 44),
+              ),
+              const SizedBox(height: 18),
+              Text('$pct%', style: GoogleFonts.nunito(color: kPrimary, fontSize: 48, fontWeight: FontWeight.w900)),
+              Text('$_score of $_totalChoices correct', style: GoogleFonts.nunito(color: kMuted, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 24),
+              FilledButton.icon(onPressed: _restart, icon: const Icon(Icons.refresh_rounded), label: const Text('Try again')),
+              const SizedBox(height: 12),
+              OutlinedButton(onPressed: widget.onMoreDialogues ?? () => Navigator.of(context).maybePop(), child: const Text('More dialogues')),
+            ],
           ),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: () => Navigator.of(context).maybePop(),
-            child: const Text('More dialogues'),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -268,21 +249,37 @@ class _DialogueViewState extends State<_DialogueView> {
     return Column(
       key: const ValueKey('chat'),
       children: [
-        // Progress bar
-        LinearProgressIndicator(
-          value: progress,
-          backgroundColor: kBorder,
-          color: kPrimary,
-          minHeight: 3,
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: duoCardDecoration(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(99),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 12,
+                    backgroundColor: kBorder,
+                    color: kPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _Eyebrow('STEP ${_turnIndex + 1} OF ${_turns.length}'),
+              ],
+            ),
+          ),
         ),
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.all(16),
             itemCount: _turnIndex + 1,
-            itemBuilder: (ctx, idx) {
+            itemBuilder: (context, idx) {
               final turn = _turns[idx];
               return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: 14),
                 child: _buildTurn(idx, turn),
               );
             },
@@ -294,130 +291,150 @@ class _DialogueViewState extends State<_DialogueView> {
 
   Widget _buildTurn(int idx, DialogueTurn turn) {
     if (turn.type == 'narration') {
-      return Text(
-        turn.text,
-        style: GoogleFonts.almarai(
-            color: kMuted, fontSize: 13, fontStyle: FontStyle.italic),
-      );
-    }
-
-    if (turn.type == 'character') {
+      final isCurrent = idx == _turnIndex;
       return Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: kCard,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: kBorder),
-        ),
+        padding: const EdgeInsets.all(16),
+        decoration: duoCardDecoration(color: kCardFeature),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (turn.speakerName != null) ...[
-              Text(turn.speakerName!.toUpperCase(),
-                  style: GoogleFonts.almarai(
-                      color: kMuted, fontSize: 10, letterSpacing: 1.5)),
-              const SizedBox(height: 6),
-            ],
-            Text(turn.text,
-                style: GoogleFonts.almarai(color: kForeground, fontSize: 15)),
-            if (turn.translation != null) ...[
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: () => setState(
-                    () => _showTranslation[idx] = !(_showTranslation[idx] ?? false)),
-                child: Text(
-                  (_showTranslation[idx] ?? false)
-                      ? turn.translation!
-                      : 'Show translation',
-                  style: GoogleFonts.almarai(
-                      color: kPrimary.withAlpha(180), fontSize: 12),
-                ),
-              ),
-            ],
-            if (idx == _turnIndex && !_chosen.containsKey(idx)) ...[
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: _advance,
-                  child: Text('Continue →',
-                      style: GoogleFonts.almarai(
-                          color: kPrimary, fontSize: 13)),
-                ),
-              ),
+            Text(
+              turn.text,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.nunito(color: kMuted, fontSize: 14, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic),
+            ),
+            if (isCurrent) ...[
+              const SizedBox(height: 12),
+              FilledButton(onPressed: _advance, child: const Text('Continue')),
             ],
           ],
         ),
       );
     }
 
-    if (turn.type == 'user_choice') {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    if (turn.type == 'character') {
+      final isCurrent = idx == _turnIndex;
+      final initial = (turn.speakerName?.isNotEmpty ?? false) ? turn.speakerName![0].toUpperCase() : '?';
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Text(
-            turn.text.isNotEmpty ? turn.text : 'What do you say?',
-            style: GoogleFonts.almarai(
-                color: kMuted, fontSize: 11, letterSpacing: 1.5),
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEDE9FE),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: kBorder, width: 2),
+            ),
+            child: Center(
+              child: Text(initial, style: GoogleFonts.nunito(color: kSecondary, fontWeight: FontWeight.w900, fontSize: 22)),
+            ),
           ),
-          const SizedBox(height: 8),
-          ...List.generate(turn.options?.length ?? 0, (oi) {
-            final opt = turn.options![oi];
-            final made = _chosen[idx];
-            final isChosen = made == oi;
-            final isCorrect = opt.isCorrect;
-
-            Color borderColor = kBorder;
-            Color bg = kCard;
-            Color textColor = kForeground;
-
-            if (made != null) {
-              if (isCorrect) {
-                borderColor = Colors.green.withAlpha(128);
-                bg = Colors.green.withAlpha(20);
-                textColor = Colors.greenAccent;
-              } else if (isChosen) {
-                borderColor = Colors.redAccent.withAlpha(128);
-                bg = Colors.redAccent.withAlpha(20);
-                textColor = Colors.redAccent;
-              } else {
-                textColor = kMuted.withAlpha(100);
-              }
-            }
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: GestureDetector(
-                onTap: made == null ? () => _handleChoice(idx, oi) : null,
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: bg,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: borderColor),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(opt.text,
-                            style: GoogleFonts.almarai(
-                                color: textColor, fontSize: 14)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: duoCardDecoration(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (turn.speakerName != null) _Eyebrow(turn.speakerName!.toUpperCase(), color: kSecondary),
+                  if (turn.speakerName != null) const SizedBox(height: 8),
+                  Text(turn.text, style: GoogleFonts.nunito(color: kForeground, fontSize: 17, fontWeight: FontWeight.w900, height: 1.35)),
+                  if (turn.translation != null) ...[
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: () => setState(() => _showTranslation[idx] = !(_showTranslation[idx] ?? false)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon((_showTranslation[idx] ?? false) ? Icons.visibility_off : Icons.visibility, color: kSecondary, size: 16),
+                          const SizedBox(width: 6),
+                          Text(
+                            (_showTranslation[idx] ?? false) ? turn.translation! : 'Show translation',
+                            style: GoogleFonts.nunito(color: kSecondary, fontWeight: FontWeight.w900, fontSize: 13),
+                          ),
+                        ],
                       ),
-                      if (made != null && isChosen)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8),
-                          child: Text(opt.feedback,
-                              style: GoogleFonts.almarai(
-                                  color: textColor.withAlpha(160),
-                                  fontSize: 11)),
-                        ),
-                    ],
+                    ),
+                  ],
+                  if (isCurrent && !_chosen.containsKey(idx)) ...[
+                    const SizedBox(height: 14),
+                    FilledButton(onPressed: _advance, child: const Text('Continue')),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (turn.type == 'user_choice') {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: duoCardDecoration(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              turn.text.isNotEmpty ? turn.text : 'What do you say?',
+              style: GoogleFonts.nunito(color: kForeground, fontSize: 18, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 12),
+            ...List.generate(turn.options?.length ?? 0, (optionIndex) {
+              final option = turn.options![optionIndex];
+              final made = _chosen[idx];
+              final isChosen = made == optionIndex;
+              final isCorrect = option.isCorrect;
+              Color borderColor = kBorder;
+              Color bg = kCard;
+              Color textColor = kForeground;
+
+              if (made != null) {
+                if (isCorrect) {
+                  borderColor = kPrimary;
+                  bg = const Color(0xFFCCFBF1);
+                  textColor = kPrimaryShadow;
+                } else if (isChosen) {
+                  borderColor = kDanger;
+                  bg = const Color(0xFFFFE4E6);
+                  textColor = kDangerShadow;
+                } else {
+                  textColor = const Color(0xFFAFAFAF);
+                }
+              }
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(18),
+                  onTap: made == null ? () => _handleChoice(idx, optionIndex) : null,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: bg,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: borderColor, width: 2),
+                      boxShadow: const [BoxShadow(color: kBorder, offset: Offset(0, 4), blurRadius: 0)],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(option.text, style: GoogleFonts.nunito(color: textColor, fontSize: 15, fontWeight: FontWeight.w900)),
+                        if (made != null && isChosen && option.feedback.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Text(option.feedback, style: GoogleFonts.nunito(color: textColor, fontSize: 12, fontWeight: FontWeight.w900)),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          }),
-        ],
+              );
+            }),
+          ],
+        ),
       );
     }
 
@@ -432,14 +449,29 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
         color: kCard,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: kBorder),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: kBorder, width: 2),
       ),
-      child: Text(label,
-          style: GoogleFonts.almarai(color: kMuted, fontSize: 11)),
+      child: Text(label, style: GoogleFonts.nunito(color: kMuted, fontSize: 12, fontWeight: FontWeight.w900)),
     );
   }
 }
+
+class _Eyebrow extends StatelessWidget {
+  const _Eyebrow(this.text, {this.color = kMuted});
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: GoogleFonts.nunito(color: color, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0),
+    );
+  }
+}
+
+

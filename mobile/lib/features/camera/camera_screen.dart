@@ -1,23 +1,24 @@
 import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../auth/auth_provider.dart';
 import '../../core/api_client.dart';
 import '../../theme/app_theme.dart';
 
 // ── Data types ─────────────────────────────────────────────────────────────────
 
 class VisionResult {
-  VisionResult(
-      {required this.caption,
-      required this.objects,
-      required this.sentences,
-      required this.imgW,
-      required this.imgH});
+  VisionResult({
+    required this.caption,
+    required this.objects,
+    required this.sentences,
+    required this.imgW,
+    required this.imgH,
+  });
   final String caption;
   final List<VisionObject> objects;
   final List<VisionSentence> sentences;
@@ -26,19 +27,27 @@ class VisionResult {
 }
 
 class VisionObject {
-  VisionObject(
-      {required this.label,
-      required this.translation,
-      required this.box});
-  final String label;
-  final String translation;
-  final List<double> box; // [x1,y1,x2,y2] — may be 0-1 normalized OR pixel
+  VisionObject({
+    required this.labelNative,
+    required this.labelTarget,
+    this.romanized,
+    required this.box,
+  });
+  final String labelNative;
+  final String labelTarget;
+  final String? romanized; // null for Latin-script target languages
+  final List<double> box; // [x1,y1,x2,y2] normalized 0-1
 }
 
 class VisionSentence {
-  VisionSentence({required this.target, required this.gloss});
+  VisionSentence({
+    required this.target,
+    required this.gloss,
+    this.romanized,
+  });
   final String target;
-  final String gloss;
+  final String gloss; // in user's native language
+  final String? romanized; // null for Latin-script target languages
 }
 
 // ── Screen ─────────────────────────────────────────────────────────────────────
@@ -49,11 +58,34 @@ class CameraScreen extends ConsumerStatefulWidget {
   ConsumerState<CameraScreen> createState() => _CameraScreenState();
 }
 
-class _CameraScreenState extends ConsumerState<CameraScreen> {
+class _CameraScreenState extends ConsumerState<CameraScreen>
+    with TickerProviderStateMixin {
   File? _image;
   VisionResult? _result;
   bool _loading = false;
   String? _error;
+
+  // Pulsing animation for the center-point dots
+  late final AnimationController _pulseCtrl;
+  late final Animation<double> _pulseAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    )..repeat(reverse: true);
+    _pulseAnim = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _pick(ImageSource source) async {
     final picker = ImagePicker();
@@ -85,8 +117,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
               .map((x) => (x as num).toDouble())
               .toList();
           return VisionObject(
-            label: (o['label'] ?? '') as String,
-            translation: (o['translation'] ?? '') as String,
+            labelNative: (o['label'] ?? '') as String,
+            labelTarget: (o['translation'] ?? '') as String,
+            romanized: o['romanized'] as String?,
             box: rawBox,
           );
         }).toList();
@@ -95,6 +128,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
           return VisionSentence(
             target: (o['target'] ?? '') as String,
             gloss: (o['gloss'] ?? '') as String,
+            romanized: o['romanized'] as String?,
           );
         }).toList();
         final dims = await _readDimensions(file);
@@ -106,7 +140,8 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
               imgH: dims.height,
             ));
       } else {
-        setState(() => _error = 'Analysis failed (${res.statusCode}).');
+        final errMsg = (res.data?['message'] ?? res.data?['error'] ?? 'Analysis failed').toString();
+        setState(() => _error = errMsg);
       }
     } catch (e) {
       setState(() => _error = e.toString());
@@ -122,13 +157,41 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final profile = ref.watch(authControllerProvider).profile;
+
     return Scaffold(
       backgroundColor: kBackground,
-      appBar: AppBar(title: const Text('Image Practice')),
+      appBar: AppBar(
+        title: const Text('Image Practice'),
+        actions: [
+          if (profile != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Center(
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: kPrimary.withAlpha(31),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: kPrimary.withAlpha(102)),
+                  ),
+                  child: Text(
+                    '${profile.targetLang.toUpperCase()} · ${profile.level}',
+                    style: GoogleFonts.nunito(
+                        color: kPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Upload buttons
+          // ── Upload buttons ─────────────────────────────────────────────────
           Row(children: [
             Expanded(
               child: FilledButton.icon(
@@ -149,43 +212,52 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
 
           if (_error != null) ...[
             const SizedBox(height: 12),
-            Text(_error!, style: const TextStyle(color: Colors.redAccent)),
+            _ErrorBanner(message: _error!),
           ],
 
           const SizedBox(height: 16),
 
-          // Image with overlays
+          // ── Image with overlays ────────────────────────────────────────────
           if (_image != null)
             _loading && _result == null
-                ? const AspectRatio(
-                    aspectRatio: 4 / 3,
-                    child: Center(
-                        child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(color: kPrimary),
-                        SizedBox(height: 12),
-                        Text('Gemma is analysing…',
-                            style: TextStyle(color: kMuted)),
-                      ],
-                    )))
+                ? _LoadingOverlay()
                 : _result != null
                     ? _AnnotatedImage(
-                        image: _image!, result: _result!)
+                        image: _image!,
+                        result: _result!,
+                        pulseAnim: _pulseAnim,
+                      )
                     : ClipRRect(
                         borderRadius: BorderRadius.circular(16),
                         child: Image.file(_image!, fit: BoxFit.cover)),
 
-          if (_result != null) ...[
-            const SizedBox(height: 8),
-            if (_result!.caption.isNotEmpty)
-              Text(
-                _result!.caption,
-                style: GoogleFonts.almarai(
-                    color: kMuted,
-                    fontSize: 13,
-                    fontStyle: FontStyle.italic),
+          // ── Caption (in native language) ───────────────────────────────────
+          if (_result != null && _result!.caption.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: kCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: kBorder),
               ),
+              child: Row(children: [
+                const Icon(Icons.auto_awesome, size: 14, color: kPrimary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _result!.caption,
+                    style: GoogleFonts.nunito(
+                        color: kMuted,
+                        fontSize: 13,
+                        fontStyle: FontStyle.italic),
+                  ),
+                ),
+              ]),
+            ),
+          ],
+
+          if (_result != null) ...[
             const SizedBox(height: 20),
             _ResultsSection(result: _result!),
           ],
@@ -195,12 +267,72 @@ class _CameraScreenState extends ConsumerState<CameraScreen> {
   }
 }
 
-// ── Annotated image with boxes ─────────────────────────────────────────────────
+// ── Loading overlay ────────────────────────────────────────────────────────────
+
+class _LoadingOverlay extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 240,
+      decoration: BoxDecoration(
+        color: kCard,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: kBorder),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(color: kPrimary, strokeWidth: 2),
+          const SizedBox(height: 16),
+          Text('Gemma is analysing…',
+              style: GoogleFonts.nunito(color: kMuted, fontSize: 13)),
+          const SizedBox(height: 4),
+          Text('This may take a moment',
+              style: GoogleFonts.nunito(color: kMuted.withAlpha(128), fontSize: 11)),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Error banner ───────────────────────────────────────────────────────────────
+
+class _ErrorBanner extends StatelessWidget {
+  const _ErrorBanner({required this.message});
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.red.withAlpha(20),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.red.withAlpha(77)),
+      ),
+      child: Row(children: [
+        const Icon(Icons.error_outline, color: Colors.redAccent, size: 16),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(message,
+              style: const TextStyle(color: Colors.redAccent, fontSize: 12)),
+        ),
+      ]),
+    );
+  }
+}
+
+// ── Annotated image with pulsing center-point dots ─────────────────────────────
 
 class _AnnotatedImage extends StatelessWidget {
-  const _AnnotatedImage({required this.image, required this.result});
+  const _AnnotatedImage({
+    required this.image,
+    required this.result,
+    required this.pulseAnim,
+  });
   final File image;
   final VisionResult result;
+  final Animation<double> pulseAnim;
 
   @override
   Widget build(BuildContext context) {
@@ -217,55 +349,95 @@ class _AnnotatedImage extends StatelessWidget {
           child: Stack(children: [
             Positioned.fill(child: Image.file(image, fit: BoxFit.cover)),
             ...result.objects.map((o) {
-              // Support both normalized (0-1) and pixel-space boxes
-              final isNorm = o.box[0] <= 1 &&
-                  o.box[1] <= 1 &&
-                  o.box[2] <= 1 &&
-                  o.box[3] <= 1;
-              final left = isNorm ? o.box[0] * dw : (o.box[0] / result.imgW) * dw;
-              final top = isNorm ? o.box[1] * dh : (o.box[1] / result.imgH) * dh;
-              final w = isNorm
-                  ? (o.box[2] - o.box[0]) * dw
-                  : ((o.box[2] - o.box[0]) / result.imgW) * dw;
-              final h = isNorm
-                  ? (o.box[3] - o.box[1]) * dh
-                  : ((o.box[3] - o.box[1]) / result.imgH) * dh;
+              final isNorm = o.box.every((v) => v <= 1.0);
+              final x1 = isNorm ? o.box[0] * dw : (o.box[0] / result.imgW) * dw;
+              final y1 = isNorm ? o.box[1] * dh : (o.box[1] / result.imgH) * dh;
+              final x2 = isNorm ? o.box[2] * dw : (o.box[2] / result.imgW) * dw;
+              final y2 = isNorm ? o.box[3] * dh : (o.box[3] / result.imgH) * dh;
+              final cx = (x1 + x2) / 2;
+              final cy = (y1 + y2) / 2;
 
               return Positioned(
-                left: left,
-                top: top,
-                width: w,
-                height: h,
-                child: Stack(clipBehavior: Clip.none, children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: kPrimary, width: 2),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                  Positioned(
-                    left: 0,
-                    top: -22,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: const BoxDecoration(color: kPrimary),
-                      child: Text(
-                        o.translation,
-                        style: GoogleFonts.almarai(
-                            color: kBackground,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                ]),
+                left: cx - 60, // center the label
+                top: cy - 10,
+                child: _PulsingLabel(object: o, pulseAnim: pulseAnim),
               );
             }),
           ]),
         ),
       );
     });
+  }
+}
+
+class _PulsingLabel extends StatelessWidget {
+  const _PulsingLabel({required this.object, required this.pulseAnim});
+  final VisionObject object;
+  final Animation<double> pulseAnim;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Pulsing dot
+        AnimatedBuilder(
+          animation: pulseAnim,
+          builder: (_, __) => Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: kPrimary.withAlpha((pulseAnim.value * 255).round()),
+              boxShadow: [
+                BoxShadow(
+                  color: kPrimary.withAlpha((pulseAnim.value * 153).round()),
+                  blurRadius: 8 * pulseAnim.value,
+                  spreadRadius: 2 * pulseAnim.value,
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
+        // Glassmorphic label chip
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.black.withAlpha(140),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                  color: kPrimary.withAlpha(128), width: 0.8),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  object.labelTarget,
+                  style: GoogleFonts.nunito(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (object.romanized != null && object.romanized!.isNotEmpty)
+                  Text(
+                    object.romanized!,
+                    style: GoogleFonts.nunito(
+                      color: kPrimary.withAlpha(217),
+                      fontSize: 9,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -278,19 +450,21 @@ class _ResultsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      // ── Objects ────────────────────────────────────────────────────────────
       Text('OBJECTS DETECTED',
-          style: GoogleFonts.almarai(
-              color: kMuted, fontSize: 11, letterSpacing: 1.5)),
+          style: GoogleFonts.nunito(
+              color: kMuted, fontSize: 11, letterSpacing: 0)),
       const SizedBox(height: 10),
       if (result.objects.isEmpty)
         Text('No objects detected.',
-            style: GoogleFonts.almarai(color: kMuted))
+            style: GoogleFonts.nunito(color: kMuted))
       else
         ...result.objects.map(
           (o) => Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: kCard,
                 borderRadius: BorderRadius.circular(12),
@@ -301,13 +475,21 @@ class _ResultsSection extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(o.translation,
-                          style: GoogleFonts.almarai(
+                      // Target language word (large)
+                      Text(o.labelTarget,
+                          style: GoogleFonts.nunito(
                               color: kForeground,
                               fontWeight: FontWeight.w600,
                               fontSize: 15)),
-                      Text(o.label,
-                          style: GoogleFonts.almarai(
+                      // Romanization (if non-Latin script)
+                      if (o.romanized != null && o.romanized!.isNotEmpty)
+                        Text(o.romanized!,
+                            style: GoogleFonts.nunito(
+                                color: kPrimary.withAlpha(204),
+                                fontSize: 12)),
+                      // Native language label
+                      Text(o.labelNative,
+                          style: GoogleFonts.nunito(
                               color: kMuted, fontSize: 12)),
                     ],
                   ),
@@ -316,14 +498,17 @@ class _ResultsSection extends StatelessWidget {
             ),
           ),
         ),
+
       const SizedBox(height: 20),
+
+      // ── Sentences ─────────────────────────────────────────────────────────
       Text('PRACTICE SENTENCES',
-          style: GoogleFonts.almarai(
-              color: kMuted, fontSize: 11, letterSpacing: 1.5)),
+          style: GoogleFonts.nunito(
+              color: kMuted, fontSize: 11, letterSpacing: 0)),
       const SizedBox(height: 10),
       if (result.sentences.isEmpty)
         Text('No sentences generated.',
-            style: GoogleFonts.almarai(color: kMuted))
+            style: GoogleFonts.nunito(color: kMuted))
       else
         ...result.sentences.map(
           (s) => Padding(
@@ -338,13 +523,24 @@ class _ResultsSection extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Target sentence
                   Text(s.target,
-                      style: GoogleFonts.almarai(
+                      style: GoogleFonts.nunito(
                           color: kForeground, fontSize: 15)),
-                  const SizedBox(height: 4),
+                  // Romanization (if non-Latin script)
+                  if (s.romanized != null && s.romanized!.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(s.romanized!,
+                        style: GoogleFonts.nunito(
+                            color: kPrimary.withAlpha(204),
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic)),
+                  ],
+                  const SizedBox(height: 5),
+                  // Native-language gloss
                   Text(s.gloss,
-                      style:
-                          GoogleFonts.almarai(color: kMuted, fontSize: 12)),
+                      style: GoogleFonts.nunito(
+                          color: kMuted, fontSize: 12)),
                 ],
               ),
             ),
@@ -354,3 +550,7 @@ class _ResultsSection extends StatelessWidget {
     ]);
   }
 }
+
+
+
+

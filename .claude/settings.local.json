@@ -27,7 +27,18 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/onboarding)",
       "Bash(curl -s -o /dev/null -w \" | /camera: %{http_code}\" http://localhost:3000/camera)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "PowerShell(git push *)",
+      "Bash(taskkill *)",
+      "Bash(git *)",
+      "Bash(npm ls *)",
+      "Bash(findstr /i \"huggingface inference\")",
+      "mcp__claude_ai_Hugging_Face__hub_repo_details",
+      "mcp__claude_ai_Hugging_Face__hub_repo_search",
+      "Bash(curl -s -o NUL -w \"practice %{http_code}\\\\n\" http://localhost:3000/practice)",
+      "Bash(curl -s -o NUL -w \"phrases %{http_code}\\\\n\" http://localhost:3000/phrases)",
+      "Bash(curl -s -o NUL -w \"camera %{http_code}\\\\n\" http://localhost:3000/camera)"
     ]
   },
   "outputStyle": "default"

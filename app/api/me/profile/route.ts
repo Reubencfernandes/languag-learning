@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getSession } from "@/lib/auth/session";
-import { db } from "@/lib/db/client";
-import { profiles } from "@/lib/db/schema";
+import { getSession, signSession, SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/auth/session";
 import { LANGUAGES, LEVELS } from "@/lib/languages";
 
 const languageCodes = LANGUAGES.map((l) => l.code) as [string, ...string[]];
@@ -31,30 +29,29 @@ export async function PUT(req: Request) {
     );
   }
 
-  const [row] = await db
-    .insert(profiles)
-    .values({
-      userId: session.userId,
+  const newJwt = await signSession({
+    ...session,
+    nativeLang: parsed.data.nativeLang,
+    targetLang: parsed.data.targetLang,
+    level: parsed.data.level,
+  });
+
+  const res = NextResponse.json({
+    profile: {
       nativeLang: parsed.data.nativeLang,
       targetLang: parsed.data.targetLang,
       level: parsed.data.level,
-    })
-    .onConflictDoUpdate({
-      target: profiles.userId,
-      set: {
-        nativeLang: parsed.data.nativeLang,
-        targetLang: parsed.data.targetLang,
-        level: parsed.data.level,
-        updatedAt: new Date(),
-      },
-    })
-    .returning();
-
-  return NextResponse.json({
-    profile: {
-      nativeLang: row.nativeLang,
-      targetLang: row.targetLang,
-      level: row.level,
     },
   });
+
+  res.cookies.set(SESSION_COOKIE, newJwt, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: SESSION_MAX_AGE,
+  });
+
+  return res;
 }
+
