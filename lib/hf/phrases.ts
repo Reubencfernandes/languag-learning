@@ -121,7 +121,7 @@ Rules:
 - Do not include markdown.${japaneseRules}`;
 
   const res = await hf.chatCompletion({
-    provider: "auto",
+    provider: "novita",
     model: MODEL,
     messages: [
       { role: "system", content: system },

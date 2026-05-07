@@ -44,7 +44,7 @@ export async function generateStory(opts: {
 
   const hf = createClient(opts.accessToken);
   const res = await hf.chatCompletion({
-    provider: "auto",
+    provider: "novita",
     model: STORY_MODEL,
     messages: [
       { role: "system", content: system },

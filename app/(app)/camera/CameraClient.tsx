@@ -7,6 +7,7 @@ import type { Level } from "@/lib/languages";
 import type { FuriSegment } from "@/lib/types/dialogue";
 import { LevelPicker } from "@/components/LevelPicker";
 import { Furi } from "@/components/Furi";
+import { PhotoMarkers } from "./PhotoMarkers";
 
 type AnalysisObject = {
   label: string;
@@ -137,33 +138,7 @@ export function CameraClient({ defaultLevel }: { defaultLevel: Level }) {
             <div className="relative inline-block max-w-full overflow-hidden rounded-2xl bg-[#101010]">
               <img src={previewUrl} alt="Selected practice" className="block max-h-[560px] w-auto max-w-full" />
 
-              {analysis?.objects.map((obj, i) => {
-                const [x1, y1, x2, y2] = obj.box;
-                const isNormalized = x1 <= 1 && y1 <= 1 && x2 <= 1 && y2 <= 1;
-                const cx = (x1 + x2) / 2;
-                const cy = (y1 + y2) / 2;
-                const left = isNormalized ? `${cx * 100}%` : `${(cx / imageSize.w) * 100}%`;
-                const top = isNormalized ? `${cy * 100}%` : `${(cy / imageSize.h) * 100}%`;
-
-                return (
-                  <div
-                    key={`${obj.translation}-${i}`}
-                    className="group absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
-                    style={{ left, top }}
-                  >
-                    <span className="absolute h-6 w-6 animate-ping rounded-full bg-[#0EA5A4]/60" />
-                    <span className="relative h-3 w-3 rounded-full bg-[#0EA5A4] ring-4 ring-white/85" />
-                    <div className="mt-2 rounded-2xl bg-white px-3 py-2 text-center shadow-[0_4px_0_rgba(0,0,0,0.18)] transition group-hover:-translate-y-1">
-                      <div className={`whitespace-nowrap text-xs font-black text-[#3C3C3C] ${obj.translationSegments ? "has-furi" : ""}`}>
-                        <Furi text={obj.translation} segments={obj.translationSegments} />
-                      </div>
-                      {obj.romanized ? (
-                        <div className="whitespace-nowrap text-[10px] font-bold text-[#777777]">{obj.romanized}</div>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
+              {analysis ? <PhotoMarkers objects={analysis.objects} imageSize={imageSize} /> : null}
 
               {isLoading && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/80 backdrop-blur-sm">

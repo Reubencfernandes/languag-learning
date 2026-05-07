@@ -29,7 +29,7 @@ export async function generateSentencesForImage(opts: {
 
   const hf = createClient(opts.accessToken);
   const res = await hf.chatCompletion({
-    provider: "auto",
+    provider: "novita",
     model: MODEL,
     messages: [
       { role: "system", content: system },

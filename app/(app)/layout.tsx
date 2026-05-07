@@ -9,7 +9,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session.targetLang || !session.level) redirect("/onboarding");
 
   return (
-    <div className="min-h-full bg-[#F8FBFF] text-[#4B4B4B]">
+    <div className="min-h-screen bg-[#F8FBFF] text-[#4B4B4B]">
       <main className="duo-safe-bottom mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 md:pb-28">
         {children}
       </main>

@@ -64,7 +64,7 @@ Output STRICT JSON:
   const varietySeed = Math.random().toString(36).slice(2, 8);
 
   const res = await hf.chatCompletion({
-    provider: "auto",
+    provider: "novita",
     model: MODEL,
     messages: [
       { role: "system", content: system },
