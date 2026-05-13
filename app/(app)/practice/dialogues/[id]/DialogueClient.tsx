@@ -71,15 +71,16 @@ export function DialogueClient({ dialogue }: { dialogue: Dialogue }) {
 
   return (
     <div className="space-y-6">
-      <div className="duo-card p-4">
-        <div className="duo-progress">
-          <motion.span
+      <div className="rounded-2xl bg-white p-5 border-3 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+        <div className="h-3 w-full rounded-full bg-gray-100 overflow-hidden relative border-2 border-black">
+          <motion.div
+            className="absolute left-0 top-0 bottom-0 bg-[#0EA5A4] rounded-full"
             initial={{ width: 0 }}
             animate={{ width: `${((turnIndex + 1) / turns.length) * 100}%` }}
             transition={{ duration: 0.35, ease: "easeOut" }}
           />
         </div>
-        <div className="mt-2 text-xs font-black uppercase text-[#777777]">
+        <div className="mt-3 text-xs font-black uppercase tracking-wider text-black">
           Step {turnIndex + 1} of {turns.length}
         </div>
       </div>
@@ -100,6 +101,7 @@ export function DialogueClient({ dialogue }: { dialogue: Dialogue }) {
               <CharacterTurn
                 turn={turn}
                 dialogueId={dialogue.id}
+                lang={dialogue.targetLang}
                 current={idx === turnIndex}
                 translationVisible={Boolean(showTranslation[idx])}
                 onToggleTranslation={() => toggleTranslation(idx)}

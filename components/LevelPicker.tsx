@@ -15,9 +15,9 @@ export function LevelPicker({
 }) {
   const isSm = size === "sm";
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-3">
       {label ? (
-        <span className="mr-1 text-[11px] font-black uppercase tracking-wider text-[#777777]">
+        <span className="mr-1 text-[11px] font-black text-black uppercase tracking-widest">
           {label}
         </span>
       ) : null}
@@ -30,12 +30,12 @@ export function LevelPicker({
             onClick={() => onChange(level)}
             title={LEVEL_DESCRIPTIONS[level]}
             aria-pressed={active}
-            className={`rounded-full font-black transition ${
-              isSm ? "px-3 py-1 text-[11px]" : "px-3.5 py-1.5 text-xs"
+            className={`rounded-xl font-black border-2 border-black transition-all block ${
+              isSm ? "px-4 py-1.5 text-xs" : "px-5 py-2 text-sm"
             } ${
               active
-                ? "bg-[#7C3AED] text-white shadow-[0_2px_0_#5B21B6]"
-                : "bg-white text-[#3C3C3C] ring-1 ring-inset ring-[#E5E5E5] hover:bg-[#F5F3FF]"
+                ? "bg-[#FFD21E] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] translate-x-[-1px] translate-y-[-1px]"
+                : "bg-white text-black shadow-[3px_3px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)]"
             }`}
           >
             {level}

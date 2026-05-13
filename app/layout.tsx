@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
-import { Almarai, Instrument_Serif } from "next/font/google";
+import { Almarai, Instrument_Serif, Geist } from "next/font/google";
 import "./globals.css";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const almarai = Almarai({
   variable: "--font-almarai",
@@ -18,8 +21,8 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "DialogueDock",
-  description: "Practicing languages using DialogueDock.",
+  title: "PraxaLing",
+  description: "Practicing languages using PraxaLing.",
 };
 
 export default function RootLayout({
@@ -28,7 +31,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${almarai.variable} ${instrumentSerif.variable} h-full antialiased`}>
+    <html lang="en" className={cn("h-full", "antialiased", almarai.variable, instrumentSerif.variable, "font-sans", geist.variable)}>
+      <head>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+      </head>
       <body className="flex min-h-full flex-col bg-black">{children}</body>
     </html>
   );

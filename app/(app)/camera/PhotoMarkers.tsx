@@ -48,17 +48,17 @@ export function PhotoMarkers({
             style={{ left, top }}
           >
             <span
-              className={`relative rounded-full bg-[#0EA5A4] ring-white/85 transition-all duration-200 ${
-                isSelected ? "h-4 w-4 ring-[6px] shadow-[0_0_0_4px_rgba(14,165,164,0.35)]" : "h-3 w-3 ring-4"
+              className={`relative rounded-full border-2 border-black bg-[#FFD21E] transition-all duration-200 ${
+                isSelected ? "h-5 w-5 bg-[#0EA5A4] shadow-[2px_2px_0px_rgba(0,0,0,1)]" : "h-4 w-4"
               }`}
             />
             <div
-              className={`mt-2 rounded-2xl bg-white px-3 py-2 text-center shadow-[0_4px_0_rgba(0,0,0,0.18)] transition-all duration-200 ${
-                isSelected ? "scale-110 shadow-[0_6px_0_rgba(0,0,0,0.22)]" : ""
+              className={`mt-2 rounded-xl border-2 border-black bg-white px-3 py-1.5 text-center shadow-[3px_3px_0px_rgba(0,0,0,1)] transition-all duration-200 ${
+                isSelected ? "scale-110 shadow-[5px_5px_0px_rgba(0,0,0,1)] bg-[#FFD21E]" : ""
               }`}
             >
               <div
-                className={`whitespace-nowrap font-black text-[#3C3C3C] ${
+                className={`whitespace-nowrap font-black text-black ${
                   isSelected ? "text-sm" : "text-xs"
                 } ${obj.translationSegments ? "has-furi" : ""}`}
               >
@@ -66,7 +66,7 @@ export function PhotoMarkers({
               </div>
               {obj.romanized ? (
                 <div
-                  className={`whitespace-nowrap font-bold text-[#777777] ${
+                  className={`whitespace-nowrap font-bold text-gray-700 ${
                     isSelected ? "text-xs" : "text-[10px]"
                   }`}
                 >

@@ -2,107 +2,152 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import ReactCountryFlag from "react-country-flag";
 import { LANGUAGES, LEVELS, LEVEL_DESCRIPTIONS, type Level } from "@/lib/languages";
 
 export function OnboardingForm() {
   const router = useRouter();
   const [nativeLang, setNativeLang] = useState("en");
-  const [targetLang, setTargetLang] = useState("es");
+  const [targetLangs, setTargetLangs] = useState<string[]>(["es"]);
   const [level, setLevel] = useState<Level>("A1");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  function handleNativeLangChange(code: string) {
+    setNativeLang(code);
+    setTargetLangs((prev) => prev.filter((l) => l !== code));
+  }
+
+  function toggleTargetLang(code: string) {
+    setTargetLangs((prev) =>
+      prev.includes(code) ? prev.filter((l) => l !== code) : [...prev, code]
+    );
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (nativeLang === targetLang) {
-      setError("Native and target languages must differ.");
+    if (targetLangs.length === 0) {
+      setError("Select at least one language to learn.");
       return;
     }
     startTransition(async () => {
       const res = await fetch("/api/me/profile", {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ nativeLang, targetLang, level }),
+        body: JSON.stringify({ nativeLang, targetLang: targetLangs[0], targetLangs, level }),
       });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         setError(j.message || j.error || "Failed to save.");
         return;
       }
-      router.push("/practice");
+      router.push("/phrases");
       router.refresh();
     });
   }
 
   return (
-    <form onSubmit={submit} className="space-y-7">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <LangSelect label="I speak" value={nativeLang} onChange={setNativeLang} />
-        <LangSelect label="I want to learn" value={targetLang} onChange={setTargetLang} exclude={nativeLang} />
-      </div>
-
+    <form onSubmit={submit} className="space-y-8 max-w-4xl mx-auto">
       <div className="space-y-3">
-        <div className="text-base font-black text-[#3C3C3C]">My current level</div>
-        <div className="grid gap-3 sm:grid-cols-5">
-          {LEVELS.map((candidate) => (
-            <button
-              type="button"
-              key={candidate}
-              onClick={() => setLevel(candidate)}
-              className={`card-duo px-4 py-4 text-left ${level === candidate ? "card-duo-active" : ""}`}
-            >
-              <div className="text-lg font-black text-[#3C3C3C]">{candidate}</div>
-              <div className="mt-1 text-xs font-bold leading-snug text-[#777777]">
-                {LEVEL_DESCRIPTIONS[candidate]}
-              </div>
-            </button>
-          ))}
+        <span className="text-base font-black text-black tracking-wide block uppercase">I speak</span>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            return (
+              <button
+                type="button"
+                key={lang.code}
+                onClick={() => handleNativeLangChange(lang.code)}
+                className={`p-3 rounded-xl border-3 border-black transition-all duration-200 flex items-center gap-2 group hover:scale-[1.02] active:scale-[0.98] ${
+                  isSelected
+                    ? "bg-[#FFD21E] shadow-[2px_2px_0px_rgba(0,0,0,1)] translate-x-[2px] translate-y-[2px]"
+                    : "bg-white shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)]"
+                }`}
+              >
+                <ReactCountryFlag 
+                  countryCode={lang.flag} 
+                  svg 
+                  style={{ width: "1.5rem", height: "1.5rem" }} 
+                  className="transition-transform group-hover:scale-110"
+                />
+                <span className="font-black text-sm text-black leading-tight">{lang.name}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {error ? <div className="rounded-2xl border-2 border-[#FECDD3] bg-[#FFE4E6] p-3 text-sm font-black text-[#BE123C]">{error}</div> : null}
+      <div className="space-y-3">
+        <span className="text-base font-black text-black tracking-wide block uppercase">
+          I want to learn
+          <span className="ml-2 text-xs font-bold text-gray-500 normal-case tracking-normal">(pick one or more)</span>
+        </span>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {LANGUAGES.filter((l) => l.code !== nativeLang).map((lang) => {
+            const isSelected = targetLangs.includes(lang.code);
+            return (
+              <button
+                type="button"
+                key={lang.code}
+                onClick={() => toggleTargetLang(lang.code)}
+                className={`p-3 rounded-xl border-3 border-black transition-all duration-200 flex items-center gap-2 group hover:scale-[1.02] active:scale-[0.98] ${
+                  isSelected
+                    ? "bg-[#FFD21E] shadow-[2px_2px_0px_rgba(0,0,0,1)] translate-x-[2px] translate-y-[2px]"
+                    : "bg-white shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)]"
+                }`}
+              >
+                <ReactCountryFlag 
+                  countryCode={lang.flag} 
+                  svg 
+                  style={{ width: "1.5rem", height: "1.5rem" }} 
+                  className="transition-transform group-hover:scale-110"
+                />
+                <span className="font-black text-sm text-black leading-tight">{lang.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-      <button type="submit" disabled={isPending} className="btn-duo btn-duo-primary w-full">
+      <div className="space-y-4">
+        <div className="text-lg font-black text-black tracking-wide uppercase">My current level</div>
+        <div className="grid gap-4 sm:grid-cols-5">
+          {LEVELS.map((candidate) => {
+            const isActive = level === candidate;
+            return (
+              <button
+                type="button"
+                key={candidate}
+                onClick={() => setLevel(candidate)}
+                className={`p-4 text-left rounded-2xl border-3 border-black transition-all block w-full ${
+                  isActive
+                    ? "bg-[#FFD21E] shadow-[2px_2px_0px_rgba(0,0,0,1)] translate-x-[2px] translate-y-[2px]"
+                    : "bg-white shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[7px_7px_0px_rgba(0,0,0,1)]"
+                }`}
+              >
+                <div className="text-xl font-black text-black">{candidate}</div>
+                <div className="mt-1 text-xs font-bold leading-relaxed text-gray-700">
+                  {LEVEL_DESCRIPTIONS[candidate]}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {error ? (
+        <div className="rounded-2xl border-3 border-black bg-[#FF8080] p-4 text-base font-black text-black shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+          {error}
+        </div>
+      ) : null}
+
+      <button
+        type="submit"
+        disabled={isPending || targetLangs.length === 0}
+        className="w-full py-4 px-6 rounded-2xl border-3 border-black bg-[#0EA5A4] hover:bg-[#0c8b8a] text-white font-black text-lg tracking-wider uppercase shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[7px_7px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-50 disabled:pointer-events-none"
+      >
         {isPending ? "Saving..." : "Start learning"}
       </button>
     </form>
-  );
-}
-
-function LangSelect({
-  label,
-  value,
-  onChange,
-  exclude,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  exclude?: string;
-}) {
-  return (
-    <label className="block space-y-2">
-      <span className="text-base font-black text-[#3C3C3C]">{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="duo-input h-14 cursor-pointer appearance-none pr-10 text-base"
-        style={{
-          backgroundImage:
-            'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%3E%3Cpath%20fill%3D%22%23777777%22%20d%3D%22M4%206l4%204%204-4z%22%2F%3E%3C%2Fsvg%3E")',
-          backgroundRepeat: "no-repeat",
-          backgroundPosition: "right 1rem center",
-          backgroundSize: "1rem auto",
-        }}
-      >
-        {LANGUAGES.filter((language) => language.code !== exclude).map((language) => (
-          <option key={language.code} value={language.code}>
-            {language.name}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }
 

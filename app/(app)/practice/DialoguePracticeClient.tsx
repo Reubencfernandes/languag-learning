@@ -6,6 +6,7 @@ import type { Level } from "@/lib/languages";
 import { CustomTopicCard } from "./CustomTopicCard";
 import { ScenarioLibrary } from "./ScenarioLibrary";
 import { DialogueResultView } from "./DialogueResultView";
+import { GeneratingDialogueProgress } from "./GeneratingDialogueProgress";
 
 export function DialoguePracticeClient({ defaultLevel }: { defaultLevel: Level }) {
   const [customTopic, setCustomTopic] = useState("");
@@ -59,6 +60,10 @@ export function DialoguePracticeClient({ defaultLevel }: { defaultLevel: Level }
         }}
       />
     );
+  }
+
+  if (activeScenario) {
+    return <GeneratingDialogueProgress scenario={activeScenario} />;
   }
 
   return (

@@ -22,28 +22,28 @@ export function CompletionCard({
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.55, ease: EASE }}
-      className="duo-card p-8 text-center sm:p-10"
+      className="rounded-2xl bg-white p-8 text-center sm:p-12 border-3 border-black shadow-[6px_6px_0px_rgba(0,0,0,1)]"
     >
-      <div className="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-[#FEF3C7] text-[#92400E] shadow-[0_4px_0_#FCD34D]">
-        <Trophy size={44} />
+      <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-[#FFD21E] text-black border-3 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)]">
+        <Trophy size={40} strokeWidth={2.5} />
       </div>
-      <div className="mt-6 text-5xl font-black text-[#0EA5A4]">{pct}%</div>
-      <div className="mt-2 text-base font-black text-[#777777]">
+      <div className="mt-6 text-5xl font-black tracking-tight text-black">{pct}%</div>
+      <div className="mt-2 text-xs font-black text-gray-600 uppercase tracking-wider">
         {score} of {total} correct
       </div>
-      <p className="mx-auto mt-5 max-w-sm text-lg font-black leading-7 text-[#3C3C3C]">
+      <p className="mx-auto mt-4 max-w-sm text-lg font-black leading-relaxed text-black tracking-tight">
         {pct === 100
           ? "Perfect! You nailed every response."
           : pct >= 70
             ? "Great work. Keep practicing."
             : "Good effort. Try again to improve."}
       </p>
-      <div className="mt-7 grid gap-3 sm:grid-cols-2">
-        <button onClick={onRestart} className="btn-duo btn-duo-white gap-2">
-          <RotateCcw size={18} />
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 max-w-md mx-auto">
+        <button onClick={onRestart} className="flex items-center justify-center gap-2 rounded-xl bg-[#FFD21E] text-black px-6 py-3.5 text-sm font-black border-3 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all uppercase tracking-wider">
+          <RotateCcw size={18} strokeWidth={3} />
           Try again
         </button>
-        <Link href="/practice" className="btn-duo btn-duo-primary">
+        <Link href="/practice" className="flex items-center justify-center gap-2 rounded-xl bg-[#0EA5A4] text-white px-6 py-3.5 text-sm font-black border-3 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all uppercase tracking-wider">
           More dialogues
         </Link>
       </div>

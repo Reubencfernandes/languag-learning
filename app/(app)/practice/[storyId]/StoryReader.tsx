@@ -147,7 +147,7 @@ export function StoryReader({ storyId, content, vocab, fromLang, toLang }: Props
               <X size={16} />
             </button>
           </div>
-          <div className="mt-2 text-sm font-bold text-[#7C3AED]">
+          <div className="mt-2 text-sm font-bold text-[#3B82F6]">
             {translating ? "Translating..." : translation ?? "-"}
           </div>
         </div>
@@ -169,7 +169,7 @@ export function StoryReader({ storyId, content, vocab, fromLang, toLang }: Props
 
       <section className="duo-card p-5 sm:p-6">
         <div className="mb-5 flex items-center gap-3">
-          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#EDE9FE] text-[#7C3AED]">
+          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#EFF6FF] text-[#3B82F6]">
             <BookOpen size={22} />
           </div>
           <div>

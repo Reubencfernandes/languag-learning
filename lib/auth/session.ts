@@ -17,8 +17,11 @@ export type SessionPayload = {
   avatarUrl?: string;
   nativeLang?: string;
   targetLang?: string;
+  targetLangs?: string[];
   level?: string;
   accessToken?: string;
+  streakCount?: number;
+  lastActiveDate?: string;
 };
 
 export async function signSession(payload: SessionPayload): Promise<string> {
@@ -40,8 +43,11 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
       avatarUrl: payload.avatarUrl,
       nativeLang: payload.nativeLang,
       targetLang: payload.targetLang,
+      targetLangs: payload.targetLangs,
       level: payload.level,
       accessToken: payload.accessToken,
+      streakCount: payload.streakCount,
+      lastActiveDate: payload.lastActiveDate,
     };
   } catch {
     return null;

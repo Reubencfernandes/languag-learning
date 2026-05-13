@@ -1,8 +1,6 @@
-"use client";
-
-import { ArrowRight, Sparkles } from "lucide-react";
 import type { DialogueScenario } from "@/lib/dialogue-scenarios";
 import { SCENARIO_THEMES } from "@/lib/dialogue-themes";
+import { ArrowRight } from "lucide-react";
 
 export function ScenarioCard({
   scenario,
@@ -24,32 +22,28 @@ export function ScenarioCard({
     <button
       onClick={onGenerate}
       disabled={disabled}
-      className="duo-card duo-card-interactive group flex min-h-[200px] flex-col p-5 text-left disabled:cursor-wait disabled:opacity-70"
+      className="group relative flex min-h-[180px] w-full flex-col text-left rounded-2xl bg-white p-6 border-3 border-black shadow-[5px_5px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[7px_7px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_rgba(0,0,0,1)] transition-all duration-200 disabled:opacity-60 disabled:pointer-events-none justify-between overflow-hidden"
     >
-      <div className="flex items-start justify-between">
-        <div className={`grid h-12 w-12 place-items-center rounded-2xl ${theme.tile} ${theme.tileText}`}>
-          <Icon size={22} />
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border-2 border-black ${theme.tile} ${theme.tileText} shadow-[2px_2px_0px_rgba(0,0,0,1)]`}>
+            <Icon size={24} strokeWidth={2.5} />
+          </div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-black bg-[#FFD21E] text-black shadow-[2px_2px_0px_rgba(0,0,0,1)] group-hover:scale-105 transition-transform">
+            <ArrowRight size={18} strokeWidth={3} className="group-hover:translate-x-0.5 transition-transform" />
+          </div>
         </div>
-        <ArrowRight size={18} className="mt-3 text-[#AFAFAF] transition group-hover:translate-x-1 group-hover:text-[#3C3C3C]" />
+        <h3 className="text-lg font-black text-black tracking-tight leading-snug mb-2 line-clamp-1 uppercase">{scenario.title}</h3>
+        <p className="line-clamp-2 text-xs font-bold leading-relaxed text-gray-700">{scenario.description}</p>
       </div>
 
-      <div className="mt-5 text-lg font-black leading-tight text-[#3C3C3C]">{scenario.title}</div>
-      <p className="mt-2 line-clamp-2 text-[13px] font-bold leading-5 text-[#777777]">{scenario.description}</p>
-
-      <div className="mt-auto pt-4">
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-[#7C3AED]">
-          {pending ? (
-            <>
-              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
-              Generating…
-            </>
-          ) : (
-            <>
-              <Sparkles size={11} />
-              Generate fresh
-            </>
-          )}
+      <div className="pt-4 mt-4 border-t-2 border-black w-full flex items-center justify-between">
+        <span className="text-xs font-black tracking-wider text-black uppercase">
+          Generate fresh
         </span>
+        {pending ? (
+          <span className="h-4 w-4 rounded-full border-2 border-black border-t-transparent animate-spin" />
+        ) : null}
       </div>
     </button>
   );

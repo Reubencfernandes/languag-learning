@@ -4,7 +4,7 @@ import { HeroSection } from "./components/HeroSection";
 
 export default async function LandingPage() {
   const session = await getSession();
-  if (session) redirect("/practice");
+  if (session) redirect("/phrases");
 
   return <HeroSection />;
 }

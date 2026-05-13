@@ -16,9 +16,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
       <nav className="fixed inset-x-0 bottom-0 z-50 border-t-2 border-[#E5E5E5] bg-white px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3">
         <div className="mx-auto grid max-w-2xl grid-cols-4 gap-2">
-          <BottomNavLink href="/practice" icon={<Home size={21} />} label="Practice" />
-          <BottomNavLink href="/camera" icon={<Camera size={21} />} label="Camera" />
           <BottomNavLink href="/phrases" icon={<Languages size={21} />} label="Phrases" />
+          <BottomNavLink href="/camera" icon={<Camera size={21} />} label="Camera" />
+          <BottomNavLink href="/practice" icon={<Home size={21} />} label="Practice" />
           <BottomNavLink href="/profile" icon={<User size={21} />} label="Profile" />
         </div>
       </nav>

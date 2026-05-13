@@ -1,0 +1,36 @@
+const LANG_MAP: Record<string, string> = {
+  en: "en-US",
+  es: "es-ES",
+  fr: "fr-FR",
+  de: "de-DE",
+  it: "it-IT",
+  pt: "pt-BR",
+  ja: "ja-JP",
+  ko: "ko-KR",
+  zh: "zh-CN",
+  yue: "zh-HK",
+  ar: "ar-SA",
+  hi: "hi-IN",
+  kn: "kn-IN",
+  ml: "ml-IN",
+  vi: "vi-VN",
+  ru: "ru-RU",
+  tr: "tr-TR",
+  pl: "pl-PL",
+  nl: "nl-NL",
+  sv: "sv-SE",
+  el: "el-GR",
+  th: "th-TH",
+  id: "id-ID",
+  bn: "bn-BD",
+  ur: "ur-PK",
+  sw: "sw-KE",
+  he: "he-IL",
+  fa: "fa-IR",
+  uk: "uk-UA",
+  ro: "ro-RO",
+};
+
+export function ttsLang(code: string): string {
+  return LANG_MAP[code] ?? code;
+}

@@ -10,6 +10,7 @@ const ProfileInput = z.object({
   nativeLang: z.enum(languageCodes),
   targetLang: z.enum(languageCodes),
   level: z.enum(levelCodes),
+  targetLangs: z.array(z.enum(languageCodes)).min(1).optional(),
 });
 
 export async function PUT(req: Request) {
@@ -29,10 +30,13 @@ export async function PUT(req: Request) {
     );
   }
 
+  const targetLangs = parsed.data.targetLangs ?? session.targetLangs;
+
   const newJwt = await signSession({
     ...session,
     nativeLang: parsed.data.nativeLang,
     targetLang: parsed.data.targetLang,
+    targetLangs,
     level: parsed.data.level,
   });
 
@@ -40,6 +44,7 @@ export async function PUT(req: Request) {
     profile: {
       nativeLang: parsed.data.nativeLang,
       targetLang: parsed.data.targetLang,
+      targetLangs,
       level: parsed.data.level,
     },
   });

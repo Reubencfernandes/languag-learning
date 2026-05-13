@@ -172,14 +172,14 @@ export default function AvatarBuilder() {
           </div>
 
           <div className="duo-soft-panel p-4 space-y-4">
-            <h3 className="font-black text-[#7C3AED]">Accessory Configuration</h3>
+            <h3 className="font-black text-[#3B82F6]">Accessory Configuration</h3>
             <Slider label="Top Position (%)" value={accConfig.top} min={0} max={100} onChange={v => setAccConfig({...accConfig, top: v})} />
             <Slider label="Left Position (%)" value={accConfig.left} min={0} max={100} onChange={v => setAccConfig({...accConfig, left: v})} />
             <Slider label="Width (px)" value={accConfig.w} min={10} max={100} onChange={v => setAccConfig({...accConfig, w: v})} />
           </div>
           
           <div className="duo-soft-panel p-4 space-y-4">
-            <h3 className="font-black text-[#7C3AED]">Body Configuration</h3>
+            <h3 className="font-black text-[#3B82F6]">Body Configuration</h3>
             <Slider label="Bottom Offset (px)" value={bodyConfig.bottom} min={-50} max={50} onChange={v => setBodyConfig({...bodyConfig, bottom: v})} />
             <Slider label="Width (px)" value={bodyConfig.w} min={20} max={200} onChange={v => setBodyConfig({...bodyConfig, w: v})} />
           </div>

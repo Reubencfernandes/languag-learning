@@ -1,4 +1,14 @@
-# Language Learner
+---
+title: PraxaLing
+emoji: 🦜
+colorFrom: yellow
+colorTo: gray
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
+# PraxaLing
 
 Learn languages through short stories and the world around you, powered by HuggingFace for identity and inference.
 
