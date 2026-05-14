@@ -1,9 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { hfExchangeCode, hfFetchUser } from "@/lib/auth/hf";
+import { hfExchangeCode, hfFetchUser, hfOriginFromRequest } from "@/lib/auth/hf";
 import { SESSION_COOKIE, signSession, SESSION_MAX_AGE } from "@/lib/auth/session";
-
-const BASE = () => process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -24,10 +22,11 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "invalid_state" }, { status: 400 });
   }
 
+  const origin = hfOriginFromRequest(req);
   const redirectUri =
     clientKind === "mobile"
-      ? `${BASE()}/api/auth/callback/huggingface?client=mobile`
-      : `${BASE()}/api/auth/callback/huggingface`;
+      ? `${origin}/api/auth/callback/huggingface?client=mobile`
+      : `${origin}/api/auth/callback/huggingface`;
 
   let tokens;
   try {
@@ -52,7 +51,7 @@ export async function GET(req: Request) {
     return NextResponse.redirect(`langlearn://auth/callback?token=${encodeURIComponent(jwt)}`);
   }
 
-  const res = NextResponse.redirect(`${BASE()}/practice`);
+  const res = NextResponse.redirect(`${origin}/practice`);
   res.cookies.set(SESSION_COOKIE, jwt, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

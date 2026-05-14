@@ -4,6 +4,23 @@ const AUTH_URL = "https://huggingface.co/oauth/authorize";
 const TOKEN_URL = "https://huggingface.co/oauth/token";
 const USERINFO_URL = "https://huggingface.co/oauth/userinfo";
 
+// Derive the public origin from the incoming request. HF Spaces serves at
+// reubencf-praxaling.hf.space and our app sits behind their reverse proxy, so
+// X-Forwarded-* headers carry the real host/scheme. NEXT_PUBLIC_APP_URL is
+// unreliable on deploy targets (defaults to localhost in .env), so we never
+// use it for the OAuth redirect URI — auth-request and token-exchange must
+// use byte-identical redirect_uri values, and request-derived origin is the
+// one thing both sides see consistently.
+export function hfOriginFromRequest(req: Request): string {
+  const forwardedHost = req.headers.get("x-forwarded-host");
+  const forwardedProto = req.headers.get("x-forwarded-proto");
+  const url = new URL(req.url);
+  const host = forwardedHost ?? req.headers.get("host") ?? url.host;
+  const isLocal = host.startsWith("localhost") || host.startsWith("127.");
+  const proto = forwardedProto ?? (isLocal ? "http" : "https");
+  return `${proto}://${host}`;
+}
+
 export type HFUser = {
   sub: string;
   name?: string;

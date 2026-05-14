@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
-import { hfBuildAuthUrl } from "@/lib/auth/hf";
-
-const WEB_REDIRECT = () => `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/auth/callback/huggingface`;
-const MOBILE_REDIRECT = () => `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/api/auth/callback/huggingface?client=mobile`;
+import { hfBuildAuthUrl, hfOriginFromRequest } from "@/lib/auth/hf";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const client = url.searchParams.get("client") === "mobile" ? "mobile" : "web";
 
-  const redirectUri = client === "mobile" ? MOBILE_REDIRECT() : WEB_REDIRECT();
+  const origin = hfOriginFromRequest(req);
+  const redirectUri =
+    client === "mobile"
+      ? `${origin}/api/auth/callback/huggingface?client=mobile`
+      : `${origin}/api/auth/callback/huggingface`;
   const { url: authUrl, state, verifier } = hfBuildAuthUrl(redirectUri);
 
   const res = NextResponse.redirect(authUrl.toString());
