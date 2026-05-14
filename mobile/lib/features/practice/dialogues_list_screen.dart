@@ -165,7 +165,7 @@ class _DialoguesListScreenState extends ConsumerState<DialoguesListScreen> {
             if (profile != null)
               Text(
                 '${languageName(profile.targetLang)} / ${profile.level}',
-                style: GoogleFonts.nunito(color: kMuted, fontSize: 12, fontWeight: FontWeight.w900),
+                style: GoogleFonts.almarai(color: kMuted, fontSize: 12, fontWeight: FontWeight.w900),
               ),
           ],
         ),
@@ -209,7 +209,7 @@ class _PracticeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return RichText(
       text: TextSpan(
-        style: GoogleFonts.nunito(
+        style: GoogleFonts.almarai(
           color: kForeground,
           fontSize: 34,
           fontWeight: FontWeight.w900,
@@ -256,7 +256,7 @@ class _ModePill extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: GoogleFonts.nunito(
+        style: GoogleFonts.almarai(
           color: active ? kForeground : kMuted,
           fontSize: 13,
           fontWeight: FontWeight.w900,
@@ -281,7 +281,7 @@ class _SectionTitle extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: GoogleFonts.nunito(color: kForeground, fontSize: 26, fontWeight: FontWeight.w900),
+            style: GoogleFonts.almarai(color: kForeground, fontSize: 26, fontWeight: FontWeight.w900),
           ),
         ),
       ],
@@ -368,7 +368,7 @@ class _ScenarioCard extends StatelessWidget {
               scenario.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.nunito(color: kForeground, fontSize: 20, fontWeight: FontWeight.w900),
+              style: GoogleFonts.almarai(color: kForeground, fontSize: 20, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 8),
             Expanded(
@@ -376,12 +376,12 @@ class _ScenarioCard extends StatelessWidget {
                 scenario.description,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.nunito(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800, height: 1.35),
+                style: GoogleFonts.almarai(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800, height: 1.35),
               ),
             ),
             Text(
               loading ? 'Generating new dialogue...' : 'Generate fresh dialogue',
-              style: GoogleFonts.nunito(color: kPrimary, fontSize: 12, fontWeight: FontWeight.w900),
+              style: GoogleFonts.almarai(color: kPrimary, fontSize: 12, fontWeight: FontWeight.w900),
             ),
           ],
         ),
@@ -409,11 +409,11 @@ class _CustomTopicPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Build your own', style: GoogleFonts.nunito(color: kPrimary, fontSize: 13, fontWeight: FontWeight.w900)),
+          Text('Build your own', style: GoogleFonts.almarai(color: kPrimary, fontSize: 13, fontWeight: FontWeight.w900)),
           const SizedBox(height: 8),
           Text(
             'What do you want to practice?',
-            style: GoogleFonts.nunito(color: kForeground, fontSize: 24, fontWeight: FontWeight.w900, height: 1.1),
+            style: GoogleFonts.almarai(color: kForeground, fontSize: 24, fontWeight: FontWeight.w900, height: 1.1),
           ),
           const SizedBox(height: 12),
           TextField(
@@ -460,13 +460,13 @@ class _NoHistoryNotice extends StatelessWidget {
           Text(
             'No saved dialogue history',
             textAlign: TextAlign.center,
-            style: GoogleFonts.nunito(color: kForeground, fontWeight: FontWeight.w900, fontSize: 18),
+            style: GoogleFonts.almarai(color: kForeground, fontWeight: FontWeight.w900, fontSize: 18),
           ),
           const SizedBox(height: 6),
           Text(
             'Generated lessons are shown once and discarded when you leave this screen.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.nunito(color: kMuted, fontWeight: FontWeight.w800, fontSize: 13, height: 1.35),
+            style: GoogleFonts.almarai(color: kMuted, fontWeight: FontWeight.w800, fontSize: 13, height: 1.35),
           ),
         ],
       ),

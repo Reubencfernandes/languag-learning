@@ -72,7 +72,7 @@ class StoryScreen extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           story.title,
-                          style: GoogleFonts.nunito(color: kForeground, fontSize: 26, fontWeight: FontWeight.w900, height: 1.1),
+                          style: GoogleFonts.almarai(color: kForeground, fontSize: 26, fontWeight: FontWeight.w900, height: 1.1),
                         ),
                       ),
                     ],
@@ -98,7 +98,7 @@ class StoryScreen extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Key vocabulary', style: GoogleFonts.nunito(color: kMuted, fontWeight: FontWeight.w900, fontSize: 12)),
+                        Text('Key vocabulary', style: GoogleFonts.almarai(color: kMuted, fontWeight: FontWeight.w900, fontSize: 12)),
                         const SizedBox(height: 12),
                         ...story.vocab.map(
                           (v) => Container(
@@ -112,14 +112,14 @@ class StoryScreen extends ConsumerWidget {
                             child: Row(
                               children: [
                                 Expanded(
-                                  child: Text(v['word'] ?? '', style: GoogleFonts.nunito(fontWeight: FontWeight.w900, color: kForeground)),
+                                  child: Text(v['word'] ?? '', style: GoogleFonts.almarai(fontWeight: FontWeight.w900, color: kForeground)),
                                 ),
                                 const SizedBox(width: 10),
                                 Flexible(
                                   child: Text(
                                     v['gloss'] ?? '',
                                     textAlign: TextAlign.right,
-                                    style: GoogleFonts.nunito(fontWeight: FontWeight.w800, color: kMuted),
+                                    style: GoogleFonts.almarai(fontWeight: FontWeight.w800, color: kMuted),
                                   ),
                                 ),
                               ],
@@ -182,7 +182,7 @@ class _TappableText extends StatelessWidget {
 
     return RichText(
       text: TextSpan(
-        style: GoogleFonts.nunito(color: kForeground, fontSize: 18, fontWeight: FontWeight.w800, height: 1.6),
+        style: GoogleFonts.almarai(color: kForeground, fontSize: 18, fontWeight: FontWeight.w800, height: 1.6),
         children: children,
       ),
     );
@@ -239,7 +239,7 @@ class _TranslationSheet extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(word, style: GoogleFonts.nunito(color: kForeground, fontSize: 24, fontWeight: FontWeight.w900)),
+              Text(word, style: GoogleFonts.almarai(color: kForeground, fontSize: 24, fontWeight: FontWeight.w900)),
               const SizedBox(height: 10),
               if (loading)
                 const Row(
@@ -252,7 +252,7 @@ class _TranslationSheet extends StatelessWidget {
               else
                 Text(
                   snapshot.data ?? '-',
-                  style: GoogleFonts.nunito(color: kSecondary, fontSize: 18, fontWeight: FontWeight.w900),
+                  style: GoogleFonts.almarai(color: kSecondary, fontSize: 18, fontWeight: FontWeight.w900),
                 ),
             ],
           );

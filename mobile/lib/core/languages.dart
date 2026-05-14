@@ -1,26 +1,27 @@
 class LanguageOption {
-  const LanguageOption(this.code, this.name);
+  const LanguageOption(this.code, this.name, this.flagCode);
   final String code;
   final String name;
+  final String flagCode;
 }
 
 const kLanguages = <LanguageOption>[
-  LanguageOption('en',  'English'),
-  LanguageOption('es',  'Spanish'),
-  LanguageOption('fr',  'French'),
-  LanguageOption('de',  'German'),
-  LanguageOption('it',  'Italian'),
-  LanguageOption('pt',  'Portuguese'),
-  LanguageOption('ja',  'Japanese'),
-  LanguageOption('ko',  'Korean'),
-  LanguageOption('zh',  'Mandarin'),
-  LanguageOption('yue', 'Cantonese'),
-  LanguageOption('ar',  'Arabic'),
-  LanguageOption('hi',  'Hindi'),
-  LanguageOption('kn',  'Kannada'),
-  LanguageOption('ml',  'Malayalam'),
-  LanguageOption('vi',  'Vietnamese'),
-  LanguageOption('ru',  'Russian'),
+  LanguageOption('en',  'English',    'US'),
+  LanguageOption('es',  'Spanish',    'ES'),
+  LanguageOption('fr',  'French',     'FR'),
+  LanguageOption('de',  'German',     'DE'),
+  LanguageOption('it',  'Italian',    'IT'),
+  LanguageOption('pt',  'Portuguese', 'BR'),
+  LanguageOption('ja',  'Japanese',   'JP'),
+  LanguageOption('ko',  'Korean',     'KR'),
+  LanguageOption('zh',  'Mandarin',   'CN'),
+  LanguageOption('yue', 'Cantonese',  'HK'),
+  LanguageOption('ar',  'Arabic',     'SA'),
+  LanguageOption('hi',  'Hindi',      'IN'),
+  LanguageOption('kn',  'Kannada',    'IN'),
+  LanguageOption('ml',  'Malayalam',  'IN'),
+  LanguageOption('vi',  'Vietnamese', 'VN'),
+  LanguageOption('ru',  'Russian',    'RU'),
 ];
 
 const kLevels = <String>['A1', 'A2', 'B1', 'B2', 'C1'];
@@ -34,6 +35,9 @@ const kLevelDescriptions = <String, String>{
 };
 
 String languageName(String code) =>
-    kLanguages.firstWhere((l) => l.code == code, orElse: () => LanguageOption(code, code)).name;
+    kLanguages.firstWhere((l) => l.code == code, orElse: () => LanguageOption(code, code, '')).name;
 
-
+String? languageFlagCode(String code) {
+  final match = kLanguages.where((l) => l.code == code).toList();
+  return match.isEmpty ? null : match.first.flagCode;
+}

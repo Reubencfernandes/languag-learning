@@ -9,7 +9,7 @@ import '../../auth/auth_provider.dart';
 import '../../core/api_client.dart';
 import '../../theme/app_theme.dart';
 
-// ── Data types ─────────────────────────────────────────────────────────────────
+// â”€â”€ Data types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class VisionResult {
   VisionResult({
@@ -50,7 +50,7 @@ class VisionSentence {
   final String? romanized; // null for Latin-script target languages
 }
 
-// ── Screen ─────────────────────────────────────────────────────────────────────
+// â”€â”€ Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class CameraScreen extends ConsumerStatefulWidget {
   const CameraScreen({super.key});
@@ -177,8 +177,8 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
                     border: Border.all(color: kPrimary.withAlpha(102)),
                   ),
                   child: Text(
-                    '${profile.targetLang.toUpperCase()} · ${profile.level}',
-                    style: GoogleFonts.nunito(
+                    '${profile.targetLang.toUpperCase()} Â· ${profile.level}',
+                    style: GoogleFonts.almarai(
                         color: kPrimary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600),
@@ -191,7 +191,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // ── Upload buttons ─────────────────────────────────────────────────
+          // â”€â”€ Upload buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           Row(children: [
             Expanded(
               child: FilledButton.icon(
@@ -217,7 +217,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
 
           const SizedBox(height: 16),
 
-          // ── Image with overlays ────────────────────────────────────────────
+          // â”€â”€ Image with overlays â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           if (_image != null)
             _loading && _result == null
                 ? _LoadingOverlay()
@@ -231,7 +231,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
                         borderRadius: BorderRadius.circular(16),
                         child: Image.file(_image!, fit: BoxFit.cover)),
 
-          // ── Caption (in native language) ───────────────────────────────────
+          // â”€â”€ Caption (in native language) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           if (_result != null && _result!.caption.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
@@ -247,7 +247,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
                 Expanded(
                   child: Text(
                     _result!.caption,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.almarai(
                         color: kMuted,
                         fontSize: 13,
                         fontStyle: FontStyle.italic),
@@ -267,7 +267,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
   }
 }
 
-// ── Loading overlay ────────────────────────────────────────────────────────────
+// â”€â”€ Loading overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _LoadingOverlay extends StatelessWidget {
   @override
@@ -285,17 +285,17 @@ class _LoadingOverlay extends StatelessWidget {
           const CircularProgressIndicator(color: kPrimary, strokeWidth: 2),
           const SizedBox(height: 16),
           Text('Gemma is analysing…',
-              style: GoogleFonts.nunito(color: kMuted, fontSize: 13)),
+              style: GoogleFonts.almarai(color: kMuted, fontSize: 13)),
           const SizedBox(height: 4),
           Text('This may take a moment',
-              style: GoogleFonts.nunito(color: kMuted.withAlpha(128), fontSize: 11)),
+              style: GoogleFonts.almarai(color: kMuted.withAlpha(128), fontSize: 11)),
         ],
       ),
     );
   }
 }
 
-// ── Error banner ───────────────────────────────────────────────────────────────
+// â”€â”€ Error banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ErrorBanner extends StatelessWidget {
   const _ErrorBanner({required this.message});
@@ -322,7 +322,7 @@ class _ErrorBanner extends StatelessWidget {
   }
 }
 
-// ── Annotated image with pulsing center-point dots ─────────────────────────────
+// â”€â”€ Annotated image with pulsing center-point dots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _AnnotatedImage extends StatelessWidget {
   const _AnnotatedImage({
@@ -418,7 +418,7 @@ class _PulsingLabel extends StatelessWidget {
               children: [
                 Text(
                   object.labelTarget,
-                  style: GoogleFonts.nunito(
+                  style: GoogleFonts.almarai(
                     color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -427,7 +427,7 @@ class _PulsingLabel extends StatelessWidget {
                 if (object.romanized != null && object.romanized!.isNotEmpty)
                   Text(
                     object.romanized!,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.almarai(
                       color: kPrimary.withAlpha(217),
                       fontSize: 9,
                     ),
@@ -441,7 +441,7 @@ class _PulsingLabel extends StatelessWidget {
   }
 }
 
-// ── Results section ───────────────────────────────────────────────────────────
+// â”€â”€ Results section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ResultsSection extends StatelessWidget {
   const _ResultsSection({required this.result});
@@ -450,14 +450,14 @@ class _ResultsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      // ── Objects ────────────────────────────────────────────────────────────
+      // â”€â”€ Objects â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       Text('OBJECTS DETECTED',
-          style: GoogleFonts.nunito(
+          style: GoogleFonts.almarai(
               color: kMuted, fontSize: 11, letterSpacing: 0)),
       const SizedBox(height: 10),
       if (result.objects.isEmpty)
         Text('No objects detected.',
-            style: GoogleFonts.nunito(color: kMuted))
+            style: GoogleFonts.almarai(color: kMuted))
       else
         ...result.objects.map(
           (o) => Padding(
@@ -477,19 +477,19 @@ class _ResultsSection extends StatelessWidget {
                     children: [
                       // Target language word (large)
                       Text(o.labelTarget,
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.almarai(
                               color: kForeground,
                               fontWeight: FontWeight.w600,
                               fontSize: 15)),
                       // Romanization (if non-Latin script)
                       if (o.romanized != null && o.romanized!.isNotEmpty)
                         Text(o.romanized!,
-                            style: GoogleFonts.nunito(
+                            style: GoogleFonts.almarai(
                                 color: kPrimary.withAlpha(204),
                                 fontSize: 12)),
                       // Native language label
                       Text(o.labelNative,
-                          style: GoogleFonts.nunito(
+                          style: GoogleFonts.almarai(
                               color: kMuted, fontSize: 12)),
                     ],
                   ),
@@ -501,14 +501,14 @@ class _ResultsSection extends StatelessWidget {
 
       const SizedBox(height: 20),
 
-      // ── Sentences ─────────────────────────────────────────────────────────
+      // â”€â”€ Sentences â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       Text('PRACTICE SENTENCES',
-          style: GoogleFonts.nunito(
+          style: GoogleFonts.almarai(
               color: kMuted, fontSize: 11, letterSpacing: 0)),
       const SizedBox(height: 10),
       if (result.sentences.isEmpty)
         Text('No sentences generated.',
-            style: GoogleFonts.nunito(color: kMuted))
+            style: GoogleFonts.almarai(color: kMuted))
       else
         ...result.sentences.map(
           (s) => Padding(
@@ -525,13 +525,13 @@ class _ResultsSection extends StatelessWidget {
                 children: [
                   // Target sentence
                   Text(s.target,
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.almarai(
                           color: kForeground, fontSize: 15)),
                   // Romanization (if non-Latin script)
                   if (s.romanized != null && s.romanized!.isNotEmpty) ...[
                     const SizedBox(height: 3),
                     Text(s.romanized!,
-                        style: GoogleFonts.nunito(
+                        style: GoogleFonts.almarai(
                             color: kPrimary.withAlpha(204),
                             fontSize: 12,
                             fontStyle: FontStyle.italic)),
@@ -539,7 +539,7 @@ class _ResultsSection extends StatelessWidget {
                   const SizedBox(height: 5),
                   // Native-language gloss
                   Text(s.gloss,
-                      style: GoogleFonts.nunito(
+                      style: GoogleFonts.almarai(
                           color: kMuted, fontSize: 12)),
                 ],
               ),

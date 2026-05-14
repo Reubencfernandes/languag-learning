@@ -163,7 +163,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return RichText(
       text: TextSpan(
-        style: GoogleFonts.nunito(
+        style: GoogleFonts.almarai(
           color: kForeground,
           fontSize: 34,
           fontWeight: FontWeight.w900,
@@ -203,7 +203,7 @@ class _InputPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Phrase or word', style: GoogleFonts.nunito(color: kPrimary, fontSize: 13, fontWeight: FontWeight.w900)),
+          Text('Phrase or word', style: GoogleFonts.almarai(color: kPrimary, fontSize: 13, fontWeight: FontWeight.w900)),
           const SizedBox(height: 12),
           TextField(
             controller: controller,
@@ -222,7 +222,7 @@ class _InputPanel extends StatelessWidget {
           ),
           if (error != null) ...[
             const SizedBox(height: 10),
-            Text(error!, style: GoogleFonts.nunito(color: kDangerShadow, fontSize: 13, fontWeight: FontWeight.w900)),
+            Text(error!, style: GoogleFonts.almarai(color: kDangerShadow, fontSize: 13, fontWeight: FontWeight.w900)),
           ],
           const SizedBox(height: 16),
           Wrap(
@@ -263,13 +263,13 @@ class _EmptyState extends StatelessWidget {
           Text(
             'Enter a phrase to build a mini lesson',
             textAlign: TextAlign.center,
-            style: GoogleFonts.nunito(color: kForeground, fontSize: 20, fontWeight: FontWeight.w900),
+            style: GoogleFonts.almarai(color: kForeground, fontSize: 20, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 6),
           Text(
             'You will get example sentences, practical tips, and verb notes when they matter.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.nunito(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800, height: 1.35),
+            style: GoogleFonts.almarai(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800, height: 1.35),
           ),
         ],
       ),
@@ -295,17 +295,17 @@ class _PhraseResult extends StatelessWidget {
             children: [
               Text(
                 analysis.partOfSpeech,
-                style: GoogleFonts.nunito(color: kPrimary, fontSize: 13, fontWeight: FontWeight.w900),
+                style: GoogleFonts.almarai(color: kPrimary, fontSize: 13, fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 8),
               Text(
                 analysis.input,
-                style: GoogleFonts.nunito(color: kForeground, fontSize: 30, fontWeight: FontWeight.w900, height: 1.05),
+                style: GoogleFonts.almarai(color: kForeground, fontSize: 30, fontWeight: FontWeight.w900, height: 1.05),
               ),
               const SizedBox(height: 10),
               Text(
                 analysis.translation,
-                style: GoogleFonts.nunito(color: kMuted, fontSize: 17, fontWeight: FontWeight.w800, height: 1.3),
+                style: GoogleFonts.almarai(color: kMuted, fontSize: 17, fontWeight: FontWeight.w800, height: 1.3),
               ),
             ],
           ),
@@ -336,12 +336,12 @@ class _SentenceCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(sentence.target, style: GoogleFonts.nunito(color: kForeground, fontSize: 18, fontWeight: FontWeight.w900)),
+            Text(sentence.target, style: GoogleFonts.almarai(color: kForeground, fontSize: 18, fontWeight: FontWeight.w900)),
             const SizedBox(height: 6),
-            Text(sentence.translation, style: GoogleFonts.nunito(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800)),
+            Text(sentence.translation, style: GoogleFonts.almarai(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800)),
             if (sentence.note.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(sentence.note, style: GoogleFonts.nunito(color: kPrimary, fontSize: 13, fontWeight: FontWeight.w900)),
+              Text(sentence.note, style: GoogleFonts.almarai(color: kPrimary, fontSize: 13, fontWeight: FontWeight.w900)),
             ],
           ],
         ),
@@ -409,11 +409,11 @@ class _BreakdownSection extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item.part, style: GoogleFonts.nunito(color: kForeground, fontSize: 17, fontWeight: FontWeight.w900)),
+                  Text(item.part, style: GoogleFonts.almarai(color: kForeground, fontSize: 17, fontWeight: FontWeight.w900)),
                   const SizedBox(height: 6),
                   Text(
                     item.explanation,
-                    style: GoogleFonts.nunito(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800, height: 1.35),
+                    style: GoogleFonts.almarai(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800, height: 1.35),
                   ),
                 ],
               ),
@@ -446,9 +446,9 @@ class _TipsSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Verb info', style: GoogleFonts.nunito(color: Color(0xFF92400E), fontSize: 13, fontWeight: FontWeight.w900)),
+                Text('Verb info', style: GoogleFonts.almarai(color: Color(0xFF92400E), fontSize: 13, fontWeight: FontWeight.w900)),
                 const SizedBox(height: 6),
-                Text(verbInfo, style: GoogleFonts.nunito(color: kForeground, fontSize: 13, fontWeight: FontWeight.w800, height: 1.35)),
+                Text(verbInfo, style: GoogleFonts.almarai(color: kForeground, fontSize: 13, fontWeight: FontWeight.w800, height: 1.35)),
               ],
             ),
           ),
@@ -459,7 +459,7 @@ class _TipsSection extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(18),
               decoration: duoCardDecoration(),
-              child: Text(tip, style: GoogleFonts.nunito(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800, height: 1.35)),
+              child: Text(tip, style: GoogleFonts.almarai(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800, height: 1.35)),
             ),
           ),
         ),
@@ -482,7 +482,7 @@ class _SectionHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: GoogleFonts.nunito(color: kForeground, fontSize: 24, fontWeight: FontWeight.w900),
+            style: GoogleFonts.almarai(color: kForeground, fontSize: 24, fontWeight: FontWeight.w900),
           ),
         ),
       ],

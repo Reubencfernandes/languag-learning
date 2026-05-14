@@ -1,3 +1,4 @@
+import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -55,7 +56,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       child: user?.avatarUrl == null
                           ? Text(
                               user?.hfUsername.substring(0, 1).toUpperCase() ?? '?',
-                              style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w900, color: kSecondary),
+                              style: GoogleFonts.almarai(fontSize: 24, fontWeight: FontWeight.w900, color: kSecondary),
                             )
                           : null,
                     ),
@@ -68,13 +69,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             user?.hfUsername ?? '-',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.nunito(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white),
+                            style: GoogleFonts.almarai(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white),
                           ),
                           Text(
                             user?.email ?? 'no email',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.nunito(color: Colors.white.withAlpha(215), fontSize: 13, fontWeight: FontWeight.w800),
+                            style: GoogleFonts.almarai(color: Colors.white.withAlpha(215), fontSize: 13, fontWeight: FontWeight.w800),
                           ),
                         ],
                       ),
@@ -95,9 +96,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       crossAxisSpacing: 12,
                       childAspectRatio: twoColumns ? 1.65 : 4.2,
                       children: [
-                        _StatCard(icon: Icons.language, label: 'I speak', value: languageName(profile.nativeLang), tone: kSecondary),
-                        _StatCard(icon: Icons.school_rounded, label: 'Learning', value: languageName(profile.targetLang), tone: kPrimary),
-                        _StatCard(icon: Icons.emoji_events_rounded, label: 'Level', value: profile.level, tone: kWarning),
+                        _StatCard(
+                          icon: _flagWidget(profile.nativeLang, kSecondary),
+                          label: 'I speak',
+                          value: languageName(profile.nativeLang),
+                          tone: kSecondary,
+                        ),
+                        _StatCard(
+                          icon: _flagWidget(profile.targetLang, kPrimary),
+                          label: 'Learning',
+                          value: languageName(profile.targetLang),
+                          tone: kPrimary,
+                        ),
+                        _StatCard(
+                          icon: Icon(Icons.emoji_events_rounded, color: kWarning),
+                          label: 'Level',
+                          value: profile.level,
+                          tone: kWarning,
+                        ),
                       ],
                     );
                   },
@@ -109,7 +125,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('My level', style: GoogleFonts.nunito(color: kForeground, fontWeight: FontWeight.w900, fontSize: 18)),
+                      Text('My level', style: GoogleFonts.almarai(color: kForeground, fontWeight: FontWeight.w900, fontSize: 18)),
                       const SizedBox(height: 14),
                       if (_savingLevel)
                         const Center(
@@ -140,10 +156,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Text(level, style: GoogleFonts.nunito(color: kForeground, fontWeight: FontWeight.w900, fontSize: 15)),
+                                    Text(level, style: GoogleFonts.almarai(color: kForeground, fontWeight: FontWeight.w900, fontSize: 15)),
                                     Text(
                                       kLevelDescriptions[level] ?? '',
-                                      style: GoogleFonts.nunito(color: kMuted, fontWeight: FontWeight.w800, fontSize: 11),
+                                      style: GoogleFonts.almarai(color: kMuted, fontWeight: FontWeight.w800, fontSize: 11),
                                     ),
                                   ],
                                 ),
@@ -167,6 +183,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
     );
   }
+
+  Widget _flagWidget(String langCode, Color tone) {
+    final flag = languageFlagCode(langCode);
+    if (flag == null || flag.isEmpty) return Icon(Icons.language, color: tone);
+    return CountryFlag.fromCountryCode(
+      flag,
+      height: 28,
+      width: 36,
+      borderRadius: 6,
+    );
+  }
 }
 
 class _StatCard extends StatelessWidget {
@@ -177,7 +204,7 @@ class _StatCard extends StatelessWidget {
     required this.tone,
   });
 
-  final IconData icon;
+  final Widget icon;
   final String label;
   final String value;
   final Color tone;
@@ -193,7 +220,7 @@ class _StatCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(color: tone.withAlpha(34), borderRadius: BorderRadius.circular(15)),
-            child: Icon(icon, color: tone),
+            child: Center(child: icon),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -201,12 +228,12 @@ class _StatCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: GoogleFonts.nunito(color: kMuted, fontSize: 11, fontWeight: FontWeight.w900)),
+                Text(label, style: GoogleFonts.almarai(color: kMuted, fontSize: 11, fontWeight: FontWeight.w900)),
                 Text(
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.nunito(color: kForeground, fontSize: 15, fontWeight: FontWeight.w900),
+                  style: GoogleFonts.almarai(color: kForeground, fontSize: 15, fontWeight: FontWeight.w900),
                 ),
               ],
             ),
@@ -216,5 +243,3 @@ class _StatCard extends StatelessWidget {
     );
   }
 }
-
-

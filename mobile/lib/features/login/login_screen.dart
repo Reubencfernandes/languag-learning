@@ -62,9 +62,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   const Center(child: _BrandMark()),
                   const SizedBox(height: 28),
                   Text(
-                    'DialogueDock',
+                    'PraxaLing',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.almarai(
                       color: kForeground,
                       fontSize: 46,
                       fontWeight: FontWeight.w900,
@@ -75,7 +75,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   Text(
                     'Quick dialogues, phrase breakdowns, and photo vocabulary in one daily lesson flow.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(
+                    style: GoogleFonts.almarai(
                       color: kMuted,
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
@@ -111,7 +111,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                       child: Text(
                         _error!,
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.nunito(color: kDangerShadow, fontWeight: FontWeight.w900),
+                        style: GoogleFonts.almarai(color: kDangerShadow, fontWeight: FontWeight.w900),
                       ),
                     ),
                   ],
@@ -119,7 +119,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with SingleTickerProv
                   Text(
                     'We use your Hugging Face account for sign in.',
                     textAlign: TextAlign.center,
-                    style: GoogleFonts.nunito(color: kMuted, fontSize: 12, fontWeight: FontWeight.w700),
+                    style: GoogleFonts.almarai(color: kMuted, fontSize: 12, fontWeight: FontWeight.w700),
                   ),
                 ],
               ),

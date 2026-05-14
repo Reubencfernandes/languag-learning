@@ -86,13 +86,13 @@ class DialogueScreen extends StatelessWidget {
                 Text(
                   'Dialogue no longer available',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.nunito(color: kForeground, fontSize: 20, fontWeight: FontWeight.w900),
+                  style: GoogleFonts.almarai(color: kForeground, fontSize: 20, fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Generated dialogues are temporary and are not stored after you leave the practice screen.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.nunito(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800, height: 1.35),
+                  style: GoogleFonts.almarai(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800, height: 1.35),
                 ),
                 const SizedBox(height: 18),
                 OutlinedButton(onPressed: () => Navigator.of(context).maybePop(), child: const Text('Back')),
@@ -188,7 +188,7 @@ class _DialogueLessonViewState extends State<DialogueLessonView> {
               const SizedBox(height: 8),
               Text(
                 widget.dialogue.scenario,
-                style: GoogleFonts.nunito(color: kForeground, fontSize: 20, fontWeight: FontWeight.w900, height: 1.35),
+                style: GoogleFonts.almarai(color: kForeground, fontSize: 20, fontWeight: FontWeight.w900, height: 1.35),
               ),
               const SizedBox(height: 18),
               Wrap(
@@ -231,8 +231,8 @@ class _DialogueLessonViewState extends State<DialogueLessonView> {
                 child: const Icon(Icons.emoji_events_rounded, color: Color(0xFF92400E), size: 44),
               ),
               const SizedBox(height: 18),
-              Text('$pct%', style: GoogleFonts.nunito(color: kPrimary, fontSize: 48, fontWeight: FontWeight.w900)),
-              Text('$_score of $_totalChoices correct', style: GoogleFonts.nunito(color: kMuted, fontWeight: FontWeight.w900)),
+              Text('$pct%', style: GoogleFonts.almarai(color: kPrimary, fontSize: 48, fontWeight: FontWeight.w900)),
+              Text('$_score of $_totalChoices correct', style: GoogleFonts.almarai(color: kMuted, fontWeight: FontWeight.w900)),
               const SizedBox(height: 24),
               FilledButton.icon(onPressed: _restart, icon: const Icon(Icons.refresh_rounded), label: const Text('Try again')),
               const SizedBox(height: 12),
@@ -301,7 +301,7 @@ class _DialogueLessonViewState extends State<DialogueLessonView> {
             Text(
               turn.text,
               textAlign: TextAlign.center,
-              style: GoogleFonts.nunito(color: kMuted, fontSize: 14, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic),
+              style: GoogleFonts.almarai(color: kMuted, fontSize: 14, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic),
             ),
             if (isCurrent) ...[
               const SizedBox(height: 12),
@@ -327,7 +327,7 @@ class _DialogueLessonViewState extends State<DialogueLessonView> {
               border: Border.all(color: kBorder, width: 2),
             ),
             child: Center(
-              child: Text(initial, style: GoogleFonts.nunito(color: kSecondary, fontWeight: FontWeight.w900, fontSize: 22)),
+              child: Text(initial, style: GoogleFonts.almarai(color: kSecondary, fontWeight: FontWeight.w900, fontSize: 22)),
             ),
           ),
           const SizedBox(width: 10),
@@ -340,7 +340,7 @@ class _DialogueLessonViewState extends State<DialogueLessonView> {
                 children: [
                   if (turn.speakerName != null) _Eyebrow(turn.speakerName!.toUpperCase(), color: kSecondary),
                   if (turn.speakerName != null) const SizedBox(height: 8),
-                  Text(turn.text, style: GoogleFonts.nunito(color: kForeground, fontSize: 17, fontWeight: FontWeight.w900, height: 1.35)),
+                  Text(turn.text, style: GoogleFonts.almarai(color: kForeground, fontSize: 17, fontWeight: FontWeight.w900, height: 1.35)),
                   if (turn.translation != null) ...[
                     const SizedBox(height: 12),
                     InkWell(
@@ -352,7 +352,7 @@ class _DialogueLessonViewState extends State<DialogueLessonView> {
                           const SizedBox(width: 6),
                           Text(
                             (_showTranslation[idx] ?? false) ? turn.translation! : 'Show translation',
-                            style: GoogleFonts.nunito(color: kSecondary, fontWeight: FontWeight.w900, fontSize: 13),
+                            style: GoogleFonts.almarai(color: kSecondary, fontWeight: FontWeight.w900, fontSize: 13),
                           ),
                         ],
                       ),
@@ -379,7 +379,7 @@ class _DialogueLessonViewState extends State<DialogueLessonView> {
           children: [
             Text(
               turn.text.isNotEmpty ? turn.text : 'What do you say?',
-              style: GoogleFonts.nunito(color: kForeground, fontSize: 18, fontWeight: FontWeight.w900),
+              style: GoogleFonts.almarai(color: kForeground, fontSize: 18, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 12),
             ...List.generate(turn.options?.length ?? 0, (optionIndex) {
@@ -422,10 +422,10 @@ class _DialogueLessonViewState extends State<DialogueLessonView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(option.text, style: GoogleFonts.nunito(color: textColor, fontSize: 15, fontWeight: FontWeight.w900)),
+                        Text(option.text, style: GoogleFonts.almarai(color: textColor, fontSize: 15, fontWeight: FontWeight.w900)),
                         if (made != null && isChosen && option.feedback.isNotEmpty) ...[
                           const SizedBox(height: 6),
-                          Text(option.feedback, style: GoogleFonts.nunito(color: textColor, fontSize: 12, fontWeight: FontWeight.w900)),
+                          Text(option.feedback, style: GoogleFonts.almarai(color: textColor, fontSize: 12, fontWeight: FontWeight.w900)),
                         ],
                       ],
                     ),
@@ -455,7 +455,7 @@ class _Chip extends StatelessWidget {
         borderRadius: BorderRadius.circular(99),
         border: Border.all(color: kBorder, width: 2),
       ),
-      child: Text(label, style: GoogleFonts.nunito(color: kMuted, fontSize: 12, fontWeight: FontWeight.w900)),
+      child: Text(label, style: GoogleFonts.almarai(color: kMuted, fontSize: 12, fontWeight: FontWeight.w900)),
     );
   }
 }
@@ -469,7 +469,7 @@ class _Eyebrow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: GoogleFonts.nunito(color: color, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0),
+      style: GoogleFonts.almarai(color: color, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0),
     );
   }
 }

@@ -35,7 +35,7 @@ function Hero() {
         <div className="absolute bottom-0 left-0 right-0 z-10 px-4 pb-6 sm:px-6 md:px-10 md:pb-10">
           <div className="grid grid-cols-12 items-end gap-5 md:gap-8">
             <div className="col-span-12 lg:col-span-8">
-              <h1 className="font-medium leading-[0.85] tracking-[0]">
+              <h1 className="font-medium leading-[0.85] tracking-[0] pb-[0.15em]">
                 <WordsPullUp
                   text="PraxaLing"
                   className="text-[3.2rem] sm:text-[5rem] md:text-[6.8rem] lg:text-[8rem] xl:text-[9.25rem] 2xl:text-[10rem]"
@@ -63,7 +63,7 @@ function Hero() {
                 transition={{ duration: 0.8, delay: 0.7, ease: EASE }}
               >
                 <span className="flex items-center gap-2">
-                  <span className="text-lg">ðŸ¤—</span>
+                  <span className="text-lg">🤗</span>
                   Start with Hugging Face
                 </span>
                 <span className="grid h-9 w-9 place-items-center rounded-full bg-black text-white transition-transform group-hover:scale-110 sm:h-10 sm:w-10">

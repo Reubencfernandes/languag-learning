@@ -82,7 +82,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                 children: [
                                   Text(
                                     'SET UP YOUR COURSE',
-                                    style: GoogleFonts.nunito(
+                                    style: GoogleFonts.almarai(
                                       color: Colors.white.withAlpha(210),
                                       fontSize: 11,
                                       fontWeight: FontWeight.w900,
@@ -91,7 +91,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                   ),
                                   Text(
                                     'Pick your path',
-                                    style: GoogleFonts.nunito(
+                                    style: GoogleFonts.almarai(
                                       color: Colors.white,
                                       fontSize: 28,
                                       fontWeight: FontWeight.w900,
@@ -152,7 +152,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                                 ),
                                 child: Text(
                                   _error!,
-                                  style: GoogleFonts.nunito(color: kDangerShadow, fontWeight: FontWeight.w900),
+                                  style: GoogleFonts.almarai(color: kDangerShadow, fontWeight: FontWeight.w900),
                                 ),
                               ),
                             ],
@@ -197,7 +197,7 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: GoogleFonts.nunito(color: kForeground, fontWeight: FontWeight.w900, fontSize: 15),
+      style: GoogleFonts.almarai(color: kForeground, fontWeight: FontWeight.w900, fontSize: 15),
     );
   }
 }
@@ -233,14 +233,14 @@ class _LevelTile extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(level, style: GoogleFonts.nunito(color: kForeground, fontWeight: FontWeight.w900, fontSize: 18)),
+            Text(level, style: GoogleFonts.almarai(color: kForeground, fontWeight: FontWeight.w900, fontSize: 18)),
             const SizedBox(height: 3),
             Flexible(
               child: Text(
                 description,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.nunito(color: kMuted, fontWeight: FontWeight.w800, fontSize: 11, height: 1.15),
+                style: GoogleFonts.almarai(color: kMuted, fontWeight: FontWeight.w800, fontSize: 11, height: 1.15),
               ),
             ),
           ],

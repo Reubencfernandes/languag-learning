@@ -52,6 +52,8 @@ export function OnboardingForm() {
       <div className="space-y-3">
         <span className="text-base font-black text-black tracking-wide block uppercase">I speak</span>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          {LANGUAGES.map((lang) => {
+            const isSelected = nativeLang === lang.code;
             return (
               <button
                 type="button"
