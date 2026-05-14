@@ -12,10 +12,14 @@ export async function GET(req: Request) {
   const { url: authUrl, state, verifier } = hfBuildAuthUrl(redirectUri);
 
   const res = NextResponse.redirect(authUrl.toString());
+  // SameSite=None so the cookies come back when HF redirects to the callback
+  // from a third-party context (e.g. our app is iframed inside huggingface.co/spaces/...).
+  // Requires Secure, which HF Spaces always serves under.
+  const isProd = process.env.NODE_ENV === "production";
   const cookieOpts = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
+    secure: isProd,
+    sameSite: isProd ? ("none" as const) : ("lax" as const),
     path: "/",
     maxAge: 60 * 10,
   };
