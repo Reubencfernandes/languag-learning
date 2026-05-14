@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { WordsPullUp } from "./WordsPullUp";
@@ -18,14 +19,28 @@ export function HeroSection() {
 }
 
 function Hero() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = true;
+    const tryPlay = () => v.play().catch(() => {});
+    tryPlay();
+    v.addEventListener("canplay", tryPlay);
+    return () => v.removeEventListener("canplay", tryPlay);
+  }, []);
+
   return (
     <section className="h-screen p-4 md:p-6">
       <div className="relative h-full overflow-hidden rounded-2xl bg-black md:rounded-[2rem]">
         <video
+          ref={videoRef}
           autoPlay
           loop
           muted
           playsInline
+          preload="auto"
           className="absolute inset-0 h-full w-full object-cover"
           src={VIDEO_URL}
         />
