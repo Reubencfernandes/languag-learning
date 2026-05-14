@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { hfBuildAuthUrl } from "@/lib/auth/hf";
 
@@ -12,7 +11,7 @@ export async function GET(req: Request) {
   const redirectUri = client === "mobile" ? MOBILE_REDIRECT() : WEB_REDIRECT();
   const { url: authUrl, state, verifier } = hfBuildAuthUrl(redirectUri);
 
-  const cookieJar = await cookies();
+  const res = NextResponse.redirect(authUrl.toString());
   const cookieOpts = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -20,10 +19,9 @@ export async function GET(req: Request) {
     path: "/",
     maxAge: 60 * 10,
   };
-  cookieJar.set("hf_oauth_state", state, cookieOpts);
-  cookieJar.set("hf_oauth_verifier", verifier, cookieOpts);
-  cookieJar.set("hf_oauth_client", client, cookieOpts);
+  res.cookies.set("hf_oauth_state", state, cookieOpts);
+  res.cookies.set("hf_oauth_verifier", verifier, cookieOpts);
+  res.cookies.set("hf_oauth_client", client, cookieOpts);
 
-  return NextResponse.redirect(authUrl.toString());
+  return res;
 }
-
