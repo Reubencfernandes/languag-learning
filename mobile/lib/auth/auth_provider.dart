@@ -8,14 +8,20 @@ import '../core/env.dart';
 import 'session_store.dart';
 
 class AuthState {
-  const AuthState({required this.status, this.user, this.profile});
+  const AuthState({required this.status, this.user, this.profile, this.streakCount = 0});
 
   final AuthStatus status;
   final User? user;
   final Profile? profile;
+  final int streakCount;
 
-  AuthState copyWith({AuthStatus? status, User? user, Profile? profile}) =>
-      AuthState(status: status ?? this.status, user: user ?? this.user, profile: profile ?? this.profile);
+  AuthState copyWith({AuthStatus? status, User? user, Profile? profile, int? streakCount}) =>
+      AuthState(
+        status: status ?? this.status,
+        user: user ?? this.user,
+        profile: profile ?? this.profile,
+        streakCount: streakCount ?? this.streakCount,
+      );
 }
 
 enum AuthStatus { unknown, signedOut, noProfile, ready }
@@ -36,22 +42,42 @@ class User {
 }
 
 class Profile {
-  const Profile({required this.nativeLang, required this.targetLang, required this.level});
+  const Profile({
+    required this.nativeLang,
+    required this.targetLang,
+    required this.targetLangs,
+    required this.level,
+  });
   final String nativeLang;
   final String targetLang;
+  final List<String> targetLangs;
   final String level;
 
-  factory Profile.fromJson(Map<String, dynamic> j) => Profile(
-        nativeLang: j['nativeLang'] as String,
-        targetLang: j['targetLang'] as String,
-        level: j['level'] as String,
-      );
+  factory Profile.fromJson(Map<String, dynamic> j) {
+    final tg = j['targetLang'] as String;
+    final list = (j['targetLangs'] as List?)?.map((e) => e.toString()).toList();
+    return Profile(
+      nativeLang: j['nativeLang'] as String,
+      targetLang: tg,
+      targetLangs: (list == null || list.isEmpty) ? [tg] : list,
+      level: j['level'] as String,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'nativeLang': nativeLang,
         'targetLang': targetLang,
+        'targetLangs': targetLangs,
         'level': level,
       };
+
+  Profile copyWith({String? nativeLang, String? targetLang, List<String>? targetLangs, String? level}) =>
+      Profile(
+        nativeLang: nativeLang ?? this.nativeLang,
+        targetLang: targetLang ?? this.targetLang,
+        targetLangs: targetLangs ?? this.targetLangs,
+        level: level ?? this.level,
+      );
 }
 
 class AuthController extends StateNotifier<AuthState> {
@@ -92,6 +118,7 @@ class AuthController extends StateNotifier<AuthState> {
         final user = User.fromJson(res.data!['user'] as Map<String, dynamic>);
         final pjson = res.data!['profile'] as Map<String, dynamic>?;
         final profile = pjson == null ? null : Profile.fromJson(pjson);
+        final streak = (res.data!['streakCount'] as num?)?.toInt() ?? 0;
         // Persist locally.
         if (profile != null) {
           await _store.writeProfile(profile.toJson());
@@ -102,6 +129,7 @@ class AuthController extends StateNotifier<AuthState> {
           status: profile == null ? AuthStatus.noProfile : AuthStatus.ready,
           user: user,
           profile: profile,
+          streakCount: streak,
         );
       } else {
         await _store.clear();
@@ -139,14 +167,23 @@ class AuthController extends StateNotifier<AuthState> {
     state = const AuthState(status: AuthStatus.signedOut);
   }
 
-  Future<void> saveProfile({required String nativeLang, required String targetLang, required String level}) async {
+  Future<void> saveProfile({
+    required String nativeLang,
+    required String targetLang,
+    required String level,
+    List<String>? targetLangs,
+  }) async {
     final res = await _api.dio.put<Map<String, dynamic>>(
       '/api/me/profile',
-      data: {'nativeLang': nativeLang, 'targetLang': targetLang, 'level': level},
+      data: {
+        'nativeLang': nativeLang,
+        'targetLang': targetLang,
+        'level': level,
+        if (targetLangs != null) 'targetLangs': targetLangs,
+      },
     );
     if (res.statusCode == 200 && res.data != null) {
       final p = Profile.fromJson(res.data!['profile'] as Map<String, dynamic>);
-      // Persist locally immediately.
       await _store.writeProfile(p.toJson());
       state = state.copyWith(status: AuthStatus.ready, profile: p);
     } else {
@@ -161,8 +198,35 @@ class AuthController extends StateNotifier<AuthState> {
     await saveProfile(
       nativeLang: current.nativeLang,
       targetLang: current.targetLang,
+      targetLangs: current.targetLangs,
       level: level,
     );
+  }
+
+  /// Update the list of languages the user is actively learning.
+  /// The first entry becomes the primary `targetLang`.
+  Future<void> setLearningLanguages(List<String> langs) async {
+    final current = state.profile;
+    if (current == null || langs.isEmpty) return;
+    await saveProfile(
+      nativeLang: current.nativeLang,
+      targetLang: langs.first,
+      targetLangs: langs,
+      level: current.level,
+    );
+  }
+
+  /// Ping the server to register today's activity and update the streak.
+  Future<void> pingStreak() async {
+    try {
+      final res = await _api.dio.post<Map<String, dynamic>>('/api/me/streak');
+      if (res.statusCode == 200 && res.data != null) {
+        final count = (res.data!['streakCount'] as num?)?.toInt() ?? state.streakCount;
+        state = state.copyWith(streakCount: count);
+      }
+    } catch (_) {
+      // streak ping is best-effort; ignore failures
+    }
   }
 }
 

@@ -150,6 +150,7 @@ class _DialoguesListScreenState extends ConsumerState<DialoguesListScreen> {
         ),
         body: DialogueLessonView(
           dialogue: generated,
+          lang: profile?.targetLang ?? 'en',
           onMoreDialogues: () => setState(() => _generatedDialogue = null),
         ),
       );

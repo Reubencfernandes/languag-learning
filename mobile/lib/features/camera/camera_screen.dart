@@ -8,6 +8,9 @@ import 'package:image_picker/image_picker.dart';
 import '../../auth/auth_provider.dart';
 import '../../core/api_client.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/furi_text.dart';
+import '../../widgets/level_picker.dart';
+import '../../widgets/tts_button.dart';
 
 // â”€â”€ Data types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -30,24 +33,28 @@ class VisionObject {
   VisionObject({
     required this.labelNative,
     required this.labelTarget,
+    this.labelTargetSegments,
     this.romanized,
     required this.box,
   });
   final String labelNative;
   final String labelTarget;
-  final String? romanized; // null for Latin-script target languages
-  final List<double> box; // [x1,y1,x2,y2] normalized 0-1
+  final List<FuriSegment>? labelTargetSegments;
+  final String? romanized;
+  final List<double> box;
 }
 
 class VisionSentence {
   VisionSentence({
     required this.target,
+    this.targetSegments,
     required this.gloss,
     this.romanized,
   });
   final String target;
-  final String gloss; // in user's native language
-  final String? romanized; // null for Latin-script target languages
+  final List<FuriSegment>? targetSegments;
+  final String gloss;
+  final String? romanized;
 }
 
 // â”€â”€ Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -64,6 +71,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
   VisionResult? _result;
   bool _loading = false;
   String? _error;
+  String? _level;
 
   // Pulsing animation for the center-point dots
   late final AnimationController _pulseCtrl;
@@ -104,8 +112,12 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
     setState(() => _loading = true);
     try {
       final api = ref.read(apiClientProvider);
-      final form = FormData.fromMap(
-          {'image': await MultipartFile.fromFile(file.path)});
+      final profile = ref.read(authControllerProvider).profile;
+      final level = _level ?? profile?.level;
+      final form = FormData.fromMap({
+        'image': await MultipartFile.fromFile(file.path),
+        if (level != null) 'level': level,
+      });
       final res = await api.dio
           .post<Map<String, dynamic>>('/api/vision/analyze', data: form);
 
@@ -119,6 +131,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
           return VisionObject(
             labelNative: (o['label'] ?? '') as String,
             labelTarget: (o['translation'] ?? '') as String,
+            labelTargetSegments: parseFuriSegments(o['translationSegments']),
             romanized: o['romanized'] as String?,
             box: rawBox,
           );
@@ -127,6 +140,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
           final o = e as Map<String, dynamic>;
           return VisionSentence(
             target: (o['target'] ?? '') as String,
+            targetSegments: parseFuriSegments(o['targetSegments']),
             gloss: (o['gloss'] ?? '') as String,
             romanized: o['romanized'] as String?,
           );
@@ -210,6 +224,30 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
             ),
           ]),
 
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: kCard,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: kBorder, width: 2),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Sentences match level',
+                    style: GoogleFonts.almarai(color: kForeground, fontSize: 12, fontWeight: FontWeight.w900),
+                  ),
+                ),
+                LevelPicker(
+                  value: _level ?? profile?.level ?? 'A1',
+                  onChanged: (l) => setState(() => _level = l),
+                ),
+              ],
+            ),
+          ),
+
           if (_error != null) ...[
             const SizedBox(height: 12),
             _ErrorBanner(message: _error!),
@@ -259,7 +297,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen>
 
           if (_result != null) ...[
             const SizedBox(height: 20),
-            _ResultsSection(result: _result!),
+            _ResultsSection(result: _result!, lang: profile?.targetLang ?? 'en'),
           ],
         ],
       ),
@@ -444,8 +482,9 @@ class _PulsingLabel extends StatelessWidget {
 // â”€â”€ Results section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _ResultsSection extends StatelessWidget {
-  const _ResultsSection({required this.result});
+  const _ResultsSection({required this.result, required this.lang});
   final VisionResult result;
+  final String lang;
 
   @override
   Widget build(BuildContext context) {
@@ -475,25 +514,29 @@ class _ResultsSection extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Target language word (large)
-                      Text(o.labelTarget,
-                          style: GoogleFonts.almarai(
-                              color: kForeground,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15)),
-                      // Romanization (if non-Latin script)
+                      FuriText(
+                        text: o.labelTarget,
+                        segments: o.labelTargetSegments,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
                       if (o.romanized != null && o.romanized!.isNotEmpty)
-                        Text(o.romanized!,
-                            style: GoogleFonts.almarai(
-                                color: kPrimary.withAlpha(204),
-                                fontSize: 12)),
-                      // Native language label
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(o.romanized!,
+                              style: GoogleFonts.almarai(
+                                  color: kPrimary.withAlpha(204),
+                                  fontSize: 12)),
+                        ),
+                      const SizedBox(height: 4),
                       Text(o.labelNative,
                           style: GoogleFonts.almarai(
-                              color: kMuted, fontSize: 12)),
+                              color: kMuted, fontSize: 12, fontWeight: FontWeight.w800)),
                     ],
                   ),
                 ),
+                const SizedBox(width: 10),
+                TtsButton(text: o.labelTarget, lang: lang, size: 34),
               ]),
             ),
           ),
@@ -523,24 +566,33 @@ class _ResultsSection extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Target sentence
-                  Text(s.target,
-                      style: GoogleFonts.almarai(
-                          color: kForeground, fontSize: 15)),
-                  // Romanization (if non-Latin script)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: FuriText(
+                          text: s.target,
+                          segments: s.targetSegments,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      TtsButton(text: s.target, lang: lang, size: 32),
+                    ],
+                  ),
                   if (s.romanized != null && s.romanized!.isNotEmpty) ...[
-                    const SizedBox(height: 3),
+                    const SizedBox(height: 4),
                     Text(s.romanized!,
                         style: GoogleFonts.almarai(
                             color: kPrimary.withAlpha(204),
                             fontSize: 12,
                             fontStyle: FontStyle.italic)),
                   ],
-                  const SizedBox(height: 5),
-                  // Native-language gloss
+                  const SizedBox(height: 8),
                   Text(s.gloss,
                       style: GoogleFonts.almarai(
-                          color: kMuted, fontSize: 12)),
+                          color: kMuted, fontSize: 12, fontWeight: FontWeight.w800)),
                 ],
               ),
             ),

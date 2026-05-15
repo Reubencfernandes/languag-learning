@@ -16,6 +16,15 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _savingLevel = false;
+  bool _savingLangs = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(authControllerProvider.notifier).pingStreak();
+    });
+  }
 
   Future<void> _changeLevel(String level) async {
     setState(() => _savingLevel = true);
@@ -30,11 +39,52 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
+  Future<void> _updateLangs(List<String> langs) async {
+    setState(() => _savingLangs = true);
+    try {
+      await ref.read(authControllerProvider.notifier).setLearningLanguages(langs);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to update languages: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _savingLangs = false);
+    }
+  }
+
+  Future<void> _pickLanguageToAdd(List<String> current, String nativeLang) async {
+    final available = kLanguages.where((l) => l.code != nativeLang && !current.contains(l.code)).toList();
+    if (available.isEmpty) return;
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text('Add a language', style: GoogleFonts.almarai(color: kForeground, fontSize: 18, fontWeight: FontWeight.w900)),
+            ),
+            ...available.map((lang) => ListTile(
+                  leading: SizedBox(width: 26, child: CountryFlag.fromCountryCode(lang.flagCode)),
+                  title: Text(lang.name, style: GoogleFonts.almarai(color: kForeground, fontWeight: FontWeight.w900)),
+                  onTap: () => Navigator.of(ctx).pop(lang.code),
+                )),
+          ],
+        ),
+      ),
+    );
+    if (selected != null) {
+      await _updateLangs([...current, selected]);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(authControllerProvider);
     final user = state.user;
     final profile = state.profile;
+    final streak = state.streakCount;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
@@ -89,12 +139,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   builder: (context, constraints) {
                     final twoColumns = constraints.maxWidth >= 620;
                     return GridView.count(
-                      crossAxisCount: twoColumns ? 3 : 1,
+                      crossAxisCount: twoColumns ? 4 : 2,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       mainAxisSpacing: 12,
                       crossAxisSpacing: 12,
-                      childAspectRatio: twoColumns ? 1.65 : 4.2,
+                      childAspectRatio: twoColumns ? 1.55 : 2.1,
                       children: [
                         _StatCard(
                           icon: _flagWidget(profile.nativeLang, kSecondary),
@@ -109,14 +159,92 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           tone: kPrimary,
                         ),
                         _StatCard(
-                          icon: Icon(Icons.emoji_events_rounded, color: kWarning),
+                          icon: const Icon(Icons.emoji_events_rounded, color: kWarning),
                           label: 'Level',
                           value: profile.level,
                           tone: kWarning,
                         ),
+                        _StatCard(
+                          icon: const Icon(Icons.local_fire_department_rounded, color: Color(0xFFEF4444)),
+                          label: 'Streak',
+                          value: '$streak ${streak == 1 ? 'day' : 'days'}',
+                          tone: const Color(0xFFEF4444),
+                        ),
                       ],
                     );
                   },
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: duoCardDecoration(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Languages I am learning', style: GoogleFonts.almarai(color: kForeground, fontWeight: FontWeight.w900, fontSize: 18)),
+                      const SizedBox(height: 14),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          for (final lang in profile.targetLangs)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: kBrutalYellow,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: kBrutalBlack, width: 2),
+                                boxShadow: const [BoxShadow(color: kBrutalBlack, offset: Offset(3, 3), blurRadius: 0)],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    width: 22,
+                                    child: _flagWidget(lang, kSecondary),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(languageName(lang), style: GoogleFonts.almarai(color: kBrutalBlack, fontWeight: FontWeight.w900, fontSize: 13)),
+                                  if (profile.targetLangs.length > 1) ...[
+                                    const SizedBox(width: 6),
+                                    InkWell(
+                                      onTap: _savingLangs
+                                          ? null
+                                          : () => _updateLangs(profile.targetLangs.where((l) => l != lang).toList()),
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(2),
+                                        child: Icon(Icons.close_rounded, size: 16, color: kBrutalBlack),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          InkWell(
+                            onTap: _savingLangs ? null : () => _pickLanguageToAdd(profile.targetLangs, profile.nativeLang),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: kCard,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: kBrutalBlack, width: 2),
+                                boxShadow: const [BoxShadow(color: kBrutalBlack, offset: Offset(3, 3), blurRadius: 0)],
+                              ),
+                              child: const Icon(Icons.add_rounded, size: 22, color: kBrutalBlack),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (_savingLangs) ...[
+                        const SizedBox(height: 10),
+                        Text('Updating languages...',
+                            style: GoogleFonts.almarai(color: const Color(0xFF0EA5A4), fontWeight: FontWeight.w900, fontSize: 11)),
+                      ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Container(
@@ -189,9 +317,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (flag == null || flag.isEmpty) return Icon(Icons.language, color: tone);
     return CountryFlag.fromCountryCode(
       flag,
-      height: 28,
-      width: 36,
-      borderRadius: 6,
     );
   }
 }

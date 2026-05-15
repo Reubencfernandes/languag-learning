@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../auth/auth_provider.dart';
 import '../../core/api_client.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/level_picker.dart';
 import 'widgets/furi_text.dart';
 import 'widgets/tts_button.dart';
 
@@ -166,6 +167,7 @@ class _PhrasesScreenState extends ConsumerState<PhrasesScreen> {
   PhraseAnalysis? _analysis;
   String? _error;
   bool _loading = false;
+  String? _level;
 
   @override
   void dispose() {
@@ -189,11 +191,12 @@ class _PhrasesScreenState extends ConsumerState<PhrasesScreen> {
     try {
       final profile = ref.read(authControllerProvider).profile;
       final api = ref.read(apiClientProvider);
+      final level = _level ?? profile?.level;
       final res = await api.dio.post<Map<String, dynamic>>(
         '/api/phrases',
         data: {
           'text': phrase,
-          if (profile != null) 'level': profile.level,
+          if (level != null) 'level': level,
         },
       );
       final data = res.data ?? const <String, dynamic>{};
@@ -219,7 +222,9 @@ class _PhrasesScreenState extends ConsumerState<PhrasesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final lang = ref.watch(authControllerProvider).profile?.targetLang ?? 'en';
+    final profile = ref.watch(authControllerProvider).profile;
+    final lang = profile?.targetLang ?? 'en';
+    final activeLevel = _level ?? profile?.level ?? 'A1';
     return Scaffold(
       appBar: AppBar(toolbarHeight: 72, title: const Text('Phrases')),
       body: SafeArea(
@@ -235,6 +240,8 @@ class _PhrasesScreenState extends ConsumerState<PhrasesScreen> {
                   controller: _controller,
                   loading: _loading,
                   error: _error,
+                  level: activeLevel,
+                  onLevelChange: (l) => setState(() => _level = l),
                   onAnalyze: () => _analyze(),
                   onExample: _analyze,
                 ),
@@ -281,6 +288,8 @@ class _InputPanel extends StatelessWidget {
     required this.controller,
     required this.loading,
     required this.error,
+    required this.level,
+    required this.onLevelChange,
     required this.onAnalyze,
     required this.onExample,
   });
@@ -288,6 +297,8 @@ class _InputPanel extends StatelessWidget {
   final TextEditingController controller;
   final bool loading;
   final String? error;
+  final String level;
+  final ValueChanged<String> onLevelChange;
   final VoidCallback onAnalyze;
   final void Function(String value) onExample;
 
@@ -300,6 +311,8 @@ class _InputPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Phrase or word', style: GoogleFonts.almarai(color: kPrimary, fontSize: 13, fontWeight: FontWeight.w900)),
+          const SizedBox(height: 10),
+          LevelPicker(value: level, onChanged: onLevelChange),
           const SizedBox(height: 12),
           TextField(
             controller: controller,

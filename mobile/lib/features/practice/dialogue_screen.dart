@@ -2,15 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
+import '../../widgets/furi_text.dart';
+import '../../widgets/tts_button.dart';
 
 class DialogueOption {
-  DialogueOption({required this.text, required this.isCorrect, required this.feedback});
+  DialogueOption({
+    required this.text,
+    this.textSegments,
+    required this.isCorrect,
+    required this.feedback,
+  });
   final String text;
+  final List<FuriSegment>? textSegments;
   final bool isCorrect;
   final String feedback;
 
   factory DialogueOption.fromJson(Map<String, dynamic> j) => DialogueOption(
         text: (j['text'] ?? '') as String,
+        textSegments: parseFuriSegments(j['textSegments']),
         isCorrect: (j['isCorrect'] ?? false) as bool,
         feedback: (j['feedback'] ?? '') as String,
       );
@@ -20,6 +29,7 @@ class DialogueTurn {
   DialogueTurn({
     required this.type,
     required this.text,
+    this.textSegments,
     this.translation,
     this.speakerName,
     this.options,
@@ -27,6 +37,7 @@ class DialogueTurn {
 
   final String type;
   final String text;
+  final List<FuriSegment>? textSegments;
   final String? translation;
   final String? speakerName;
   final List<DialogueOption>? options;
@@ -34,6 +45,7 @@ class DialogueTurn {
   factory DialogueTurn.fromJson(Map<String, dynamic> j) => DialogueTurn(
         type: (j['type'] ?? 'narration') as String,
         text: (j['text'] ?? '') as String,
+        textSegments: parseFuriSegments(j['textSegments']),
         translation: j['translation'] as String?,
         speakerName: j['speakerName'] as String?,
         options: j['options'] is List
@@ -106,8 +118,9 @@ class DialogueScreen extends StatelessWidget {
 }
 
 class DialogueLessonView extends StatefulWidget {
-  const DialogueLessonView({super.key, required this.dialogue, this.onMoreDialogues});
+  const DialogueLessonView({super.key, required this.dialogue, required this.lang, this.onMoreDialogues});
   final DialogueFull dialogue;
+  final String lang;
   final VoidCallback? onMoreDialogues;
 
   @override
@@ -340,7 +353,21 @@ class _DialogueLessonViewState extends State<DialogueLessonView> {
                 children: [
                   if (turn.speakerName != null) _Eyebrow(turn.speakerName!.toUpperCase(), color: kSecondary),
                   if (turn.speakerName != null) const SizedBox(height: 8),
-                  Text(turn.text, style: GoogleFonts.almarai(color: kForeground, fontSize: 17, fontWeight: FontWeight.w900, height: 1.35)),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: FuriText(
+                          text: turn.text,
+                          segments: turn.textSegments,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      TtsButton(text: turn.text, lang: widget.lang, size: 32),
+                    ],
+                  ),
                   if (turn.translation != null) ...[
                     const SizedBox(height: 12),
                     InkWell(
@@ -422,7 +449,13 @@ class _DialogueLessonViewState extends State<DialogueLessonView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(option.text, style: GoogleFonts.almarai(color: textColor, fontSize: 15, fontWeight: FontWeight.w900)),
+                        FuriText(
+                          text: option.text,
+                          segments: option.textSegments,
+                          fontSize: 15,
+                          color: textColor,
+                          fontWeight: FontWeight.w900,
+                        ),
                         if (made != null && isChosen && option.feedback.isNotEmpty) ...[
                           const SizedBox(height: 6),
                           Text(option.feedback, style: GoogleFonts.almarai(color: textColor, fontSize: 12, fontWeight: FontWeight.w900)),

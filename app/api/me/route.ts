@@ -16,9 +16,11 @@ export async function GET() {
       ? {
           nativeLang: session.nativeLang,
           targetLang: session.targetLang,
+          targetLangs: session.targetLangs ?? [session.targetLang],
           level: session.level,
         }
       : null,
+    streakCount: session.streakCount ?? 0,
   });
 }
 

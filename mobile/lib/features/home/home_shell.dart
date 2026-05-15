@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../auth/auth_provider.dart';
 import '../camera/camera_screen.dart';
 import '../phrases/phrases_screen.dart';
 import '../practice/dialogues_list_screen.dart';
 import '../profile/profile_screen.dart';
 import '../../theme/app_theme.dart';
 
-class HomeShell extends StatefulWidget {
+class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
   @override
-  State<HomeShell> createState() => _HomeShellState();
+  ConsumerState<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState extends ConsumerState<HomeShell> {
   int _index = 0;
 
   static const _pages = [
@@ -21,6 +23,14 @@ class _HomeShellState extends State<HomeShell> {
     PhrasesScreen(),
     ProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(authControllerProvider.notifier).pingStreak();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
