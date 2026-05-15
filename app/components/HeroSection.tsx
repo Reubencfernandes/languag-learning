@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { WordsPullUp } from "./WordsPullUp";
@@ -20,6 +20,7 @@ export function HeroSection() {
 
 function Hero() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [opensAuthInNewTab, setOpensAuthInNewTab] = useState(true);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -29,6 +30,14 @@ function Hero() {
     tryPlay();
     v.addEventListener("canplay", tryPlay);
     return () => v.removeEventListener("canplay", tryPlay);
+  }, []);
+
+  useEffect(() => {
+    try {
+      setOpensAuthInNewTab(window.self !== window.top);
+    } catch {
+      setOpensAuthInNewTab(true);
+    }
   }, []);
 
   return (
@@ -72,8 +81,8 @@ function Hero() {
 
               <motion.a
                 href="/api/auth/login"
-                target="_blank"
-                rel="noopener noreferrer"
+                target={opensAuthInNewTab ? "_blank" : undefined}
+                rel={opensAuthInNewTab ? "noopener noreferrer" : undefined}
                 className="group mt-5 inline-flex items-center gap-3 rounded-full bg-white py-2 pl-6 pr-2 text-sm font-bold text-black transition-all duration-300 hover:gap-4 hover:shadow-[0_0_25px_rgba(255,255,255,0.3)] sm:text-base"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
