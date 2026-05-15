@@ -2,23 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../auth/auth_provider.dart';
 import '../../core/api_client.dart';
 import '../../theme/app_theme.dart';
+import 'widgets/furi_text.dart';
+import 'widgets/tts_button.dart';
 
 const _phraseFill = Color(0xFFE8F7F6);
 const _warningFill = Color(0xFFFEF3C7);
+const _kanjiExampleFill = Color(0xFFE6FBFA);
 const _examples = ['to find', 'I would like...', 'appointment', 'Can you help me?', 'because'];
 
 String _value(Map<String, dynamic> json, String key) => (json[key] ?? '').toString();
 
 class PhraseSentence {
-  PhraseSentence({required this.target, required this.translation, required this.note});
+  PhraseSentence({
+    required this.target,
+    required this.targetSegments,
+    required this.translation,
+    required this.note,
+  });
   final String target;
+  final List<FuriSegment>? targetSegments;
   final String translation;
   final String note;
 
   factory PhraseSentence.fromJson(Map<String, dynamic> json) => PhraseSentence(
         target: _value(json, 'target'),
+        targetSegments: parseFuriSegments(json['targetSegments']),
         translation: _value(json, 'translation'),
         note: _value(json, 'note'),
       );
@@ -35,27 +46,89 @@ class PhraseBreakdown {
       );
 }
 
+class RelatedWord {
+  RelatedWord({
+    required this.word,
+    required this.wordSegments,
+    required this.translation,
+    required this.partOfSpeech,
+    required this.note,
+  });
+  final String word;
+  final List<FuriSegment>? wordSegments;
+  final String translation;
+  final String partOfSpeech;
+  final String note;
+
+  factory RelatedWord.fromJson(Map<String, dynamic> json) => RelatedWord(
+        word: _value(json, 'word'),
+        wordSegments: parseFuriSegments(json['wordSegments']),
+        translation: _value(json, 'translation'),
+        partOfSpeech: _value(json, 'partOfSpeech'),
+        note: _value(json, 'note'),
+      );
+}
+
+class KanjiInfo {
+  KanjiInfo({
+    required this.kanji,
+    required this.onyomi,
+    required this.kunyomi,
+    required this.meaning,
+    required this.exampleWord,
+    required this.exampleWordReading,
+  });
+  final String kanji;
+  final List<String> onyomi;
+  final List<String> kunyomi;
+  final String meaning;
+  final String exampleWord;
+  final String exampleWordReading;
+
+  factory KanjiInfo.fromJson(Map<String, dynamic> json) => KanjiInfo(
+        kanji: _value(json, 'kanji'),
+        onyomi: ((json['onyomi'] as List?) ?? [])
+            .map((e) => e.toString())
+            .where((e) => e.isNotEmpty)
+            .toList(),
+        kunyomi: ((json['kunyomi'] as List?) ?? [])
+            .map((e) => e.toString())
+            .where((e) => e.isNotEmpty)
+            .toList(),
+        meaning: _value(json, 'meaning'),
+        exampleWord: _value(json, 'exampleWord'),
+        exampleWordReading: _value(json, 'exampleWordReading'),
+      );
+}
+
 class PhraseAnalysis {
   PhraseAnalysis({
     required this.input,
+    required this.inputSegments,
     required this.translation,
     required this.partOfSpeech,
     required this.verbInfo,
     required this.breakdown,
     required this.sentences,
     required this.tips,
+    required this.relatedWords,
+    required this.kanjiInfo,
   });
 
   final String input;
+  final List<FuriSegment>? inputSegments;
   final String translation;
   final String partOfSpeech;
   final String verbInfo;
   final List<PhraseBreakdown> breakdown;
   final List<PhraseSentence> sentences;
   final List<String> tips;
+  final List<RelatedWord> relatedWords;
+  final List<KanjiInfo> kanjiInfo;
 
   factory PhraseAnalysis.fromJson(Map<String, dynamic> json) => PhraseAnalysis(
         input: _value(json, 'input'),
+        inputSegments: parseFuriSegments(json['inputSegments']),
         translation: _value(json, 'translation'),
         partOfSpeech: _value(json, 'partOfSpeech').isEmpty ? 'phrase' : _value(json, 'partOfSpeech'),
         verbInfo: _value(json, 'verbInfo'),
@@ -68,6 +141,16 @@ class PhraseAnalysis {
             .map((item) => PhraseSentence.fromJson(Map<String, dynamic>.from(item)))
             .toList(),
         tips: ((json['tips'] as List?) ?? []).map((tip) => tip.toString()).where((tip) => tip.isNotEmpty).toList(),
+        relatedWords: ((json['relatedWords'] as List?) ?? [])
+            .whereType<Map>()
+            .map((item) => RelatedWord.fromJson(Map<String, dynamic>.from(item)))
+            .where((w) => w.word.isNotEmpty)
+            .toList(),
+        kanjiInfo: ((json['kanjiInfo'] as List?) ?? [])
+            .whereType<Map>()
+            .map((item) => KanjiInfo.fromJson(Map<String, dynamic>.from(item)))
+            .where((k) => k.kanji.isNotEmpty && (k.onyomi.isNotEmpty || k.kunyomi.isNotEmpty))
+            .toList(),
       );
 }
 
@@ -104,8 +187,15 @@ class _PhrasesScreenState extends ConsumerState<PhrasesScreen> {
     });
 
     try {
+      final profile = ref.read(authControllerProvider).profile;
       final api = ref.read(apiClientProvider);
-      final res = await api.dio.post<Map<String, dynamic>>('/api/phrases', data: {'text': phrase});
+      final res = await api.dio.post<Map<String, dynamic>>(
+        '/api/phrases',
+        data: {
+          'text': phrase,
+          if (profile != null) 'level': profile.level,
+        },
+      );
       final data = res.data ?? const <String, dynamic>{};
       final ok = (res.statusCode ?? 500) >= 200 && (res.statusCode ?? 500) < 300;
       if (!mounted) return;
@@ -129,6 +219,7 @@ class _PhrasesScreenState extends ConsumerState<PhrasesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = ref.watch(authControllerProvider).profile?.targetLang ?? 'en';
     return Scaffold(
       appBar: AppBar(toolbarHeight: 72, title: const Text('Phrases')),
       body: SafeArea(
@@ -148,7 +239,12 @@ class _PhrasesScreenState extends ConsumerState<PhrasesScreen> {
                   onExample: _analyze,
                 ),
                 const SizedBox(height: 30),
-                if (_analysis == null) const _EmptyState() else _PhraseResult(analysis: _analysis!),
+                if (_loading)
+                  const _EmptyState(isPending: true)
+                else if (_analysis == null)
+                  const _EmptyState()
+                else
+                  _PhraseResult(analysis: _analysis!, lang: lang),
               ],
             ),
           ),
@@ -244,7 +340,8 @@ class _InputPanel extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+  const _EmptyState({this.isPending = false});
+  final bool isPending;
 
   @override
   Widget build(BuildContext context) {
@@ -256,30 +353,106 @@ class _EmptyState extends StatelessWidget {
           Container(
             width: 62,
             height: 62,
-            decoration: BoxDecoration(color: const Color(0xFFEDE9FE), borderRadius: BorderRadius.circular(20)),
-            child: const Icon(Icons.edit_note_rounded, color: kSecondary, size: 34),
+            decoration: BoxDecoration(
+              color: kBrutalYellow,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: kBrutalBlack, width: 2),
+              boxShadow: const [
+                BoxShadow(color: kBrutalBlack, offset: Offset(3, 3), blurRadius: 0),
+              ],
+            ),
+            child: const Icon(Icons.edit_note_rounded, color: kBrutalBlack, size: 34),
           ),
-          const SizedBox(height: 16),
-          Text(
-            'Enter a phrase to build a mini lesson',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.almarai(color: kForeground, fontSize: 20, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'You will get example sentences, practical tips, and verb notes when they matter.',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.almarai(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800, height: 1.35),
-          ),
+          const SizedBox(height: 20),
+          if (isPending) ...[
+            Text(
+              'Building your mini lesson...',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.almarai(color: kForeground, fontSize: 18, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 14),
+            const _BrutalProgressBar(),
+          ] else
+            Text(
+              'Enter a phrase to build a mini lesson',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.almarai(color: kForeground, fontSize: 20, fontWeight: FontWeight.w900),
+            ),
         ],
       ),
     );
   }
 }
 
+class _BrutalProgressBar extends StatefulWidget {
+  const _BrutalProgressBar();
+
+  @override
+  State<_BrutalProgressBar> createState() => _BrutalProgressBarState();
+}
+
+class _BrutalProgressBarState extends State<_BrutalProgressBar> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat();
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 22,
+      decoration: BoxDecoration(
+        color: kBrutalWhite,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: kBrutalBlack, width: 2),
+        boxShadow: const [
+          BoxShadow(color: kBrutalBlack, offset: Offset(3, 3), blurRadius: 0),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(999),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
+            final segmentWidth = width * 0.33;
+            return AnimatedBuilder(
+              animation: _ctrl,
+              builder: (context, _) {
+                final t = _ctrl.value;
+                final left = -segmentWidth + (width + segmentWidth) * t;
+                return Stack(
+                  children: [
+                    Positioned(
+                      left: left,
+                      top: 0,
+                      bottom: 0,
+                      width: segmentWidth,
+                      child: Container(color: const Color(0xFF0EA5A4)),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
 class _PhraseResult extends StatelessWidget {
-  const _PhraseResult({required this.analysis});
+  const _PhraseResult({required this.analysis, required this.lang});
   final PhraseAnalysis analysis;
+  final String lang;
 
   @override
   Widget build(BuildContext context) {
@@ -293,14 +466,23 @@ class _PhraseResult extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                analysis.partOfSpeech,
-                style: GoogleFonts.almarai(color: kPrimary, fontSize: 13, fontWeight: FontWeight.w900),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      analysis.partOfSpeech,
+                      style: GoogleFonts.almarai(color: kPrimary, fontSize: 13, fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                  TtsButton(text: analysis.input, lang: lang, size: 40),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                analysis.input,
-                style: GoogleFonts.almarai(color: kForeground, fontSize: 30, fontWeight: FontWeight.w900, height: 1.05),
+              const SizedBox(height: 10),
+              FuriText(
+                text: analysis.input,
+                segments: analysis.inputSegments,
+                fontSize: 30,
+                fontWeight: FontWeight.w900,
               ),
               const SizedBox(height: 10),
               Text(
@@ -313,7 +495,23 @@ class _PhraseResult extends StatelessWidget {
         const SizedBox(height: 28),
         _SectionHeader(icon: Icons.forum_rounded, title: 'Example sentences'),
         const SizedBox(height: 12),
-        ...analysis.sentences.map((sentence) => _SentenceCard(sentence: sentence)),
+        ...analysis.sentences.map((sentence) => _SentenceCard(sentence: sentence, lang: lang)),
+        if (analysis.kanjiInfo.isNotEmpty) ...[
+          const SizedBox(height: 28),
+          _SectionHeader(icon: Icons.translate_rounded, title: 'Kanji breakdown'),
+          const SizedBox(height: 12),
+          _CardGrid(
+            children: analysis.kanjiInfo.map((k) => _KanjiCard(kanji: k)).toList(),
+          ),
+        ],
+        if (analysis.relatedWords.isNotEmpty) ...[
+          const SizedBox(height: 28),
+          _SectionHeader(icon: Icons.menu_book_rounded, title: 'Related words'),
+          const SizedBox(height: 12),
+          _CardGrid(
+            children: analysis.relatedWords.map((w) => _RelatedWordCard(word: w, lang: lang)).toList(),
+          ),
+        ],
         const SizedBox(height: 28),
         _ResponsiveResultGrid(analysis: analysis),
       ],
@@ -322,8 +520,9 @@ class _PhraseResult extends StatelessWidget {
 }
 
 class _SentenceCard extends StatelessWidget {
-  const _SentenceCard({required this.sentence});
+  const _SentenceCard({required this.sentence, required this.lang});
   final PhraseSentence sentence;
+  final String lang;
 
   @override
   Widget build(BuildContext context) {
@@ -336,8 +535,22 @@ class _SentenceCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(sentence.target, style: GoogleFonts.almarai(color: kForeground, fontSize: 18, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 6),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: FuriText(
+                    text: sentence.target,
+                    segments: sentence.targetSegments,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                TtsButton(text: sentence.target, lang: lang),
+              ],
+            ),
+            const SizedBox(height: 8),
             Text(sentence.translation, style: GoogleFonts.almarai(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800)),
             if (sentence.note.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -345,6 +558,197 @@ class _SentenceCard extends StatelessWidget {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CardGrid extends StatelessWidget {
+  const _CardGrid({required this.children});
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 900
+            ? 3
+            : constraints.maxWidth >= 560
+                ? 2
+                : 1;
+        const spacing = 12.0;
+        final totalSpacing = spacing * (columns - 1);
+        final colWidth = (constraints.maxWidth - totalSpacing) / columns;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: children
+              .map((c) => SizedBox(width: colWidth, child: c))
+              .toList(),
+        );
+      },
+    );
+  }
+}
+
+class _KanjiCard extends StatelessWidget {
+  const _KanjiCard({required this.kanji});
+  final KanjiInfo kanji;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: brutalCard(offset: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(kanji.kanji, style: GoogleFonts.almarai(color: kForeground, fontSize: 40, fontWeight: FontWeight.w900, height: 1.0)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    kanji.meaning,
+                    style: GoogleFonts.almarai(color: kMuted, fontSize: 13, fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _readingRow(label: 'On', fill: kBrutalYellow, labelColor: kBrutalBlack, readings: kanji.onyomi),
+          const SizedBox(height: 8),
+          _readingRow(label: 'Kun', fill: const Color(0xFF0EA5A4), labelColor: kBrutalWhite, readings: kanji.kunyomi),
+          if (kanji.exampleWord.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: _kanjiExampleFill,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: kBrutalBlack, width: 2),
+                boxShadow: const [
+                  BoxShadow(color: kBrutalBlack, offset: Offset(3, 3), blurRadius: 0),
+                ],
+              ),
+              child: FuriText(
+                text: kanji.exampleWord,
+                segments: kanji.exampleWordReading.isNotEmpty
+                    ? [FuriSegment(text: kanji.exampleWord, reading: kanji.exampleWordReading)]
+                    : null,
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _readingRow({required String label, required Color fill, required Color labelColor, required List<String> readings}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 48,
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          decoration: BoxDecoration(
+            color: fill,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: kBrutalBlack, width: 2),
+            boxShadow: const [
+              BoxShadow(color: kBrutalBlack, offset: Offset(2, 2), blurRadius: 0),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            label,
+            style: GoogleFonts.almarai(color: labelColor, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            readings.isEmpty ? '—' : readings.join('、'),
+            style: GoogleFonts.almarai(
+              color: readings.isEmpty ? const Color(0xFFD1D5DB) : kBrutalBlack,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RelatedWordCard extends StatelessWidget {
+  const _RelatedWordCard({required this.word, required this.lang});
+  final RelatedWord word;
+  final String lang;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: brutalCard(offset: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: FuriText(
+                  text: word.word,
+                  segments: word.wordSegments,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (word.partOfSpeech.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      margin: const EdgeInsets.only(bottom: 6),
+                      decoration: BoxDecoration(
+                        color: kBrutalYellow,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: kBrutalBlack, width: 1.5),
+                        boxShadow: const [
+                          BoxShadow(color: kBrutalBlack, offset: Offset(1, 1), blurRadius: 0),
+                        ],
+                      ),
+                      child: Text(
+                        word.partOfSpeech.toUpperCase(),
+                        style: GoogleFonts.almarai(
+                          color: kBrutalBlack,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  TtsButton(text: word.word, lang: lang, size: 30),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(word.translation, style: GoogleFonts.almarai(color: const Color(0xFF374151), fontSize: 15, fontWeight: FontWeight.w800)),
+          if (word.note.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(word.note, style: GoogleFonts.almarai(color: const Color(0xFF6B7280), fontSize: 13, fontWeight: FontWeight.w900)),
+          ],
+        ],
       ),
     );
   }
