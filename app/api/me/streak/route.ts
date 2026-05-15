@@ -28,11 +28,12 @@ export async function POST() {
   }
 
   const newJwt = await signSession({ ...session, streakCount, lastActiveDate: today });
+  const isProd = process.env.NODE_ENV === "production";
   const res = NextResponse.json({ streakCount });
   res.cookies.set(SESSION_COOKIE, newJwt, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
     path: "/",
     maxAge: SESSION_MAX_AGE,
   });

@@ -49,10 +49,11 @@ export async function PUT(req: Request) {
     },
   });
 
+  const isProd = process.env.NODE_ENV === "production";
   res.cookies.set(SESSION_COOKIE, newJwt, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
     path: "/",
     maxAge: SESSION_MAX_AGE,
   });

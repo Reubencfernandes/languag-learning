@@ -51,11 +51,15 @@ export async function GET(req: Request) {
     return NextResponse.redirect(`langlearn://auth/callback?token=${encodeURIComponent(jwt)}`);
   }
 
+  const isProd = process.env.NODE_ENV === "production";
   const res = NextResponse.redirect(`${origin}/practice`);
+  // SameSite=None in prod so the session cookie is sent when the Space is
+  // iframed inside huggingface.co/spaces/... (third-party context). Requires
+  // Secure, which Spaces serve under.
   res.cookies.set(SESSION_COOKIE, jwt, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
     path: "/",
     maxAge: SESSION_MAX_AGE,
   });
