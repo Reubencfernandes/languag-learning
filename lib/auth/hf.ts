@@ -4,6 +4,18 @@ const AUTH_URL = "https://huggingface.co/oauth/authorize";
 const TOKEN_URL = "https://huggingface.co/oauth/token";
 const USERINFO_URL = "https://huggingface.co/oauth/userinfo";
 
+function firstHeaderValue(value: string | null): string | null {
+  return value?.split(",")[0]?.trim() || null;
+}
+
+function stripScheme(host: string | undefined): string | null {
+  return host?.trim().replace(/^https?:\/\//, "").replace(/\/$/, "") || null;
+}
+
+function isLocalHost(host: string): boolean {
+  return host.startsWith("localhost") || host.startsWith("127.") || host.startsWith("0.0.0.0") || host === "::1";
+}
+
 // Derive the public origin from the incoming request. HF Spaces serves at
 // reubencf-praxaling.hf.space and our app sits behind their reverse proxy, so
 // X-Forwarded-* headers carry the real host/scheme. NEXT_PUBLIC_APP_URL is
@@ -12,12 +24,13 @@ const USERINFO_URL = "https://huggingface.co/oauth/userinfo";
 // use byte-identical redirect_uri values, and request-derived origin is the
 // one thing both sides see consistently.
 export function hfOriginFromRequest(req: Request): string {
-  const forwardedHost = req.headers.get("x-forwarded-host");
-  const forwardedProto = req.headers.get("x-forwarded-proto");
+  const forwardedHost = firstHeaderValue(req.headers.get("x-forwarded-host"));
+  const forwardedProto = firstHeaderValue(req.headers.get("x-forwarded-proto"));
+  const spaceHost = stripScheme(process.env.SPACE_HOST);
   const url = new URL(req.url);
-  const host = forwardedHost ?? req.headers.get("host") ?? url.host;
-  const isLocal = host.startsWith("localhost") || host.startsWith("127.");
-  const proto = forwardedProto ?? (isLocal ? "http" : "https");
+  const requestHost = stripScheme(forwardedHost ?? req.headers.get("host") ?? url.host) ?? url.host;
+  const host = spaceHost && isLocalHost(requestHost) ? spaceHost : requestHost;
+  const proto = forwardedProto ?? (isLocalHost(host) ? "http" : "https");
   return `${proto}://${host}`;
 }
 
@@ -31,10 +44,10 @@ export type HFUser = {
 };
 
 function clientForRedirect(redirectUri: string) {
-  const id = process.env.HF_OAUTH_CLIENT_ID;
-  const secret = process.env.HF_OAUTH_CLIENT_SECRET;
+  const id = process.env.OAUTH_CLIENT_ID ?? process.env.HF_OAUTH_CLIENT_ID;
+  const secret = process.env.OAUTH_CLIENT_SECRET ?? process.env.HF_OAUTH_CLIENT_SECRET;
   if (!id || !secret) {
-    throw new Error("HF_OAUTH_CLIENT_ID / HF_OAUTH_CLIENT_SECRET not set");
+    throw new Error("HF_OAUTH_CLIENT_ID / HF_OAUTH_CLIENT_SECRET or OAUTH_CLIENT_ID / OAUTH_CLIENT_SECRET not set");
   }
   return new OAuth2Client(id, secret, redirectUri);
 }
@@ -68,4 +81,3 @@ export async function hfFetchUser(accessToken: string): Promise<HFUser> {
   if (!res.ok) throw new Error(`HF userinfo failed: ${res.status}`);
   return (await res.json()) as HFUser;
 }
-

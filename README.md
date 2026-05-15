@@ -6,6 +6,10 @@ colorTo: gray
 sdk: docker
 app_port: 7860
 pinned: false
+hf_oauth: true
+hf_oauth_scopes:
+  - email
+  - inference-api
 ---
 
 # PraxaLing
@@ -56,13 +60,17 @@ npm run dev
 
 Required env:
 - `AUTH_SECRET` — any 32+ char random string (`openssl rand -base64 32`)
-- `HF_OAUTH_CLIENT_ID` / `HF_OAUTH_CLIENT_SECRET` — from https://huggingface.co/settings/applications/new
+- `HF_OAUTH_CLIENT_ID` / `HF_OAUTH_CLIENT_SECRET` — from https://huggingface.co/settings/applications/new, or use the Space metadata `hf_oauth: true` and the app will read Hugging Face's injected `OAUTH_CLIENT_ID` / `OAUTH_CLIENT_SECRET`
 - `HF_TOKEN` — read token from https://huggingface.co/settings/tokens
 - Optional: `BLOB_READ_WRITE_TOKEN` for Vercel Blob
 
 Redirect URIs to register on the HF OAuth app:
 - `http://localhost:3000/api/auth/callback/huggingface`
 - `http://localhost:3000/api/auth/callback/huggingface?client=mobile`
+- `https://<SPACE_HOST>/api/auth/callback/huggingface`
+- `https://<SPACE_HOST>/api/auth/callback/huggingface?client=mobile`
+
+For the hosted Space, use the direct `*.hf.space` host, not the `huggingface.co/spaces/...` page, for redirect URIs and mobile `API_BASE_URL`.
 
 ## Getting started (mobile)
 
@@ -75,6 +83,9 @@ flutter run --dart-define=API_BASE_URL=http://127.0.0.1:3000
 
 # Android emulator — host loopback is 10.0.2.2 (default)
 flutter run
+
+# Hosted backend / physical device
+flutter run --dart-define=API_BASE_URL=https://<SPACE_HOST>
 ```
 
 See `docs/API.md` for the endpoints the app consumes.

@@ -72,8 +72,8 @@ function Hero() {
 
               <motion.a
                 href="/api/auth/login"
-                target="_top"
-                rel="noopener"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="group mt-5 inline-flex items-center gap-3 rounded-full bg-white py-2 pl-6 pr-2 text-sm font-bold text-black transition-all duration-300 hover:gap-4 hover:shadow-[0_0_25px_rgba(255,255,255,0.3)] sm:text-base"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
