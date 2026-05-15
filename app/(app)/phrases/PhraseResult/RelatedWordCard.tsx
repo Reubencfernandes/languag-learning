@@ -6,7 +6,7 @@ export function RelatedWordCard({ word, lang }: { word: RelatedWord; lang: strin
   return (
     <div className="rounded-xl bg-white p-5 border-3 border-black shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_rgba(0,0,0,1)]">
       <div className="flex items-center justify-between gap-2">
-        <div className={`text-base font-black text-black ${word.wordSegments ? "has-furi" : ""}`}>
+        <div className={`text-xl font-black text-black ${word.wordSegments ? "has-furi" : ""}`}>
           <Furi text={word.word} segments={word.wordSegments} />
         </div>
         <div className="flex items-center gap-2">
@@ -18,8 +18,8 @@ export function RelatedWordCard({ word, lang }: { word: RelatedWord; lang: strin
           <TTSButton text={word.word} lang={lang} />
         </div>
       </div>
-      <div className="mt-2 text-sm font-bold text-gray-700">{word.translation}</div>
-      {word.note ? <p className="mt-2 text-xs font-black text-gray-500">{word.note}</p> : null}
+      <div className="mt-3 text-base font-bold text-gray-700">{word.translation}</div>
+      {word.note ? <p className="mt-2 text-sm font-black text-gray-500">{word.note}</p> : null}
     </div>
   );
 }

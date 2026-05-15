@@ -94,7 +94,7 @@ export function PhrasesClient({ defaultLevel, lang }: { defaultLevel: Level; lan
           ) : null}
         </div>
 
-      {result ? <PhraseResult result={result} lang={lang} /> : <EmptyState />}
+      {isPending ? <EmptyState isPending /> : result ? <PhraseResult result={result} lang={lang} /> : <EmptyState />}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Languages, Lightbulb, ListChecks, MessageSquareText, Sparkles } from "lucide-react";
+import { BookOpen, Languages, Lightbulb, ListChecks, MessageSquareText } from "lucide-react";
 import type { PhraseAnalysis } from "@/lib/hf/phrases";
 import { Section } from "./Section";
 import { HeaderCard } from "./HeaderCard";
@@ -36,7 +36,7 @@ export function PhraseResult({ result, lang }: { result: PhraseAnalysis; lang: s
       ) : null}
 
       {result.relatedWords.length > 0 ? (
-        <Section title="Related words" icon={<Sparkles size={22} />}>
+        <Section title="Related words" icon={<BookOpen size={22} strokeWidth={2.5} />}>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {result.relatedWords.map((word, index) => (
               <RelatedWordCard key={`${word.word}-${index}`} word={word} lang={lang} />
